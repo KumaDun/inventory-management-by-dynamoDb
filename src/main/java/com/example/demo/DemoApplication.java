@@ -12,23 +12,26 @@ import java.util.Arrays;
 public class DemoApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(DemoApplication.class, args);
+//		SpringApplication.run(DemoApplication.class, args);
+
+		System.out.println("Welcome to the inventory management system");
 	}
-
-	@Bean
-	public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
-		return args -> {
-
-			System.out.println("Let's inspect the beans provided by Spring Boot:");
-
-			String[] beanNames = ctx.getBeanDefinitionNames();
-			Arrays.sort(beanNames);
-			for (String beanName : beanNames) {
-				System.out.println(beanName);
-			}
-
-		};
-	}
+	//TODO some key methods need to return boolean to indicate operation result
+	//TODO DynamoDB use environment varialbes for credentials, configure it in AWS context
+//	@Bean
+//	public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
+//		return args -> {
+//
+//			System.out.println("Let's inspect the beans provided by Spring Boot:");
+//
+//			String[] beanNames = ctx.getBeanDefinitionNames();
+//			Arrays.sort(beanNames);
+//			for (String beanName : beanNames) {
+//				System.out.println(beanName);
+//			}
+//
+//		};
+//	}
 
 
 }

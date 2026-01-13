@@ -1,6 +1,7 @@
 package com.example.demo.dao;
 
 import com.example.demo.model.InventoryItem;
+import org.springframework.beans.factory.annotation.Value;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 
@@ -14,9 +15,10 @@ public class InventoryDAO {
     private final DynamoDbTable<InventoryItem> inventoryTable;
 
     @Autowired
-    public InventoryDAO(DynamoDbEnhancedClient enhancedClient) {
+    public InventoryDAO(DynamoDbEnhancedClient enhancedClient,
+                        @Value("${dynamodb.inventory.table.name}") String tableName) {
         this.enhancedClient = enhancedClient;
-        this.inventoryTable = enhancedClient.table("Inventory", TableSchema.fromBean(InventoryItem.class));
+        this.inventoryTable = enhancedClient.table(tableName, TableSchema.fromBean(InventoryItem.class));
     }
 
     public void saveItem(InventoryItem item) {
