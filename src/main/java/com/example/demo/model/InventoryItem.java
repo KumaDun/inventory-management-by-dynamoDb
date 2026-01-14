@@ -5,32 +5,77 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 
 @DynamoDbBean
 public class InventoryItem {
-    private String id;
+    private String itemId;
     private String name;
-    private int quantity;
+    private String description;
+    private float price;
+    private int stockLevel;
+    private String category;
+    private int threshold;
+    private boolean isAvailable;
 
     @DynamoDbPartitionKey
-    public String getId() {
-        return id;
+    public String getItemId() {
+        return itemId;
     }
 
     public String getName() {
         return name;
     }
 
-    public int getQuantity() {
-        return quantity;
+    public String getDescription() {
+        return description;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public float getPrice() {
+        return price;
+    }
+
+    public int getStockLevel() {
+        return stockLevel;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public int getThreshold() {
+        return threshold;
+    }
+
+    public boolean isAvailable() {
+        return isAvailable;
+    }
+
+    public void setItemId(String itemId) {
+        this.itemId = itemId;
     }
 
     public void setName(String name) {
         this.name = name;
     }
 
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setPrice(float price) {
+        this.price = price;
+    }
+
+    public void setStockLevel(int stockLevel) {
+        this.stockLevel = stockLevel;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public void setThreshold(int threshold) {
+        this.threshold = threshold;
+    }
+
+    public void setAvailable(boolean available) {
+        isAvailable = available;
     }
 }

@@ -19,20 +19,4 @@ public class DemoApplication {
 	//TODO DynamoDB use environment variablest for credentials, configure it in AWS context
 	//TODO after creating table, need to wait some time before it's ready, use aws waiter
 	//TODO write Readme including bais maven configuration, EB deployment
-	@Bean
-	public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
-		return args -> {
-
-			System.out.println("Let's inspect the beans provided by Spring Boot:");
-
-			String[] beanNames = ctx.getBeanDefinitionNames();
-			Arrays.sort(beanNames);
-			for (String beanName : beanNames) {
-				System.out.println(beanName);
-			}
-
-		};
-	}
-
-
 }

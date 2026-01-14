@@ -10,26 +10,26 @@ import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 
 @Repository
-public class InventoryDAO {
+public class ItemsRepository {
     private final DynamoDbEnhancedClient enhancedClient;
-    private final DynamoDbTable<InventoryItem> inventoryTable;
+    private final DynamoDbTable<InventoryItem> itemsTable;
 
     @Autowired
-    public InventoryDAO(DynamoDbEnhancedClient enhancedClient,
-                        @Value("${dynamodb.inventory.table.name}") String tableName) {
+    public ItemsRepository(DynamoDbEnhancedClient enhancedClient,
+                           @Value("${dynamodb.inventory.table.itemsTable.name}") String tableName) {
         this.enhancedClient = enhancedClient;
-        this.inventoryTable = enhancedClient.table(tableName, TableSchema.fromBean(InventoryItem.class));
+        this.itemsTable = enhancedClient.table(tableName, TableSchema.fromBean(InventoryItem.class));
     }
 
     public void saveItem(InventoryItem item) {
-        inventoryTable.putItem(item);
+        itemsTable.putItem(item);
     }
 
     public InventoryItem loadItem(String id) {
-        return inventoryTable.getItem(item -> item.key(k -> k.partitionValue(id)));
+        return itemsTable.getItem(item -> item.key(k -> k.partitionValue(id)));
     }
 
     public void deleteItem(InventoryItem item) {
-        inventoryTable.deleteItem(item);
+        itemsTable.deleteItem(item);
     }
 }
