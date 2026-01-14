@@ -10,12 +10,12 @@ import software.amazon.awssdk.services.dynamodb.model.*;
 import java.util.List;
 
 @Service
-public class DBStartUpService {
+public class DynamoDbTableInitializer {
     private final DynamoDbClient dynamoDbClient;
     private final String tableName;
 
     @Autowired
-    public DBStartUpService(DynamoDbClient dynamoDbClient, @Value("${dynamodb.inventory.table.name}") String tableName) {
+    public DynamoDbTableInitializer(DynamoDbClient dynamoDbClient, @Value("${dynamodb.inventory.table.name}") String tableName) {
         this.dynamoDbClient = dynamoDbClient;
         this.tableName = tableName;
     }

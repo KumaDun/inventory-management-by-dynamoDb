@@ -18,6 +18,7 @@ public class DemoApplication {
 	}
 	//TODO some key methods need to return boolean to indicate operation result
 	//TODO DynamoDB use environment varialbes for credentials, configure it in AWS context
+	//TODO after creating table, need to wait some time before it's ready, use aws waiter
 //	@Bean
 //	public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
 //		return args -> {
