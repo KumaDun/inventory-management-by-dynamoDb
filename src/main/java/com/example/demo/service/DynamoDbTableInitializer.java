@@ -3,6 +3,7 @@ package com.example.demo.service;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
@@ -10,6 +11,7 @@ import software.amazon.awssdk.services.dynamodb.model.*;
 import java.util.List;
 
 @Service
+@Profile("!test") // disable initializing tables in test
 public class DynamoDbTableInitializer {
     private final DynamoDbClient dynamoDbClient;
     private final String tableName;
