@@ -14,11 +14,11 @@ public class InventoryService {
         this.itemsRepository = itemsRepository;
     }
 
-    public void addInventoryItem(InventoryItem item) {
-        itemsRepository.saveItem(item);
+    public void putInventoryItem(InventoryItem item) {
+        itemsRepository.putItem(item);
     }
 
     public InventoryItem getInventoryItem(String id) {
-        return itemsRepository.loadItem(id);
+        return itemsRepository.getItem(id);
     }
 }

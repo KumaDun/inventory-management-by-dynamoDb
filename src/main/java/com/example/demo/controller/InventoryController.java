@@ -15,8 +15,8 @@ public class InventoryController {
     }
 
     @PostMapping("/add")
-    public void addInventoryItem(@RequestBody InventoryItem item) {
-        inventoryService.addInventoryItem(item);
+    public void putInventoryItem(@RequestBody InventoryItem item) {
+        inventoryService.putInventoryItem(item);
     }
 
     @GetMapping("/{id}")

@@ -21,15 +21,15 @@ public class ItemsRepository {
         this.itemsTable = enhancedClient.table(tableName, TableSchema.fromBean(InventoryItem.class));
     }
 
-    public void saveItem(InventoryItem item) {
-        itemsTable.putItem(item);
+    public void putItem(InventoryItem inventoryItem) {
+        itemsTable.putItem(inventoryItem);
     }
 
-    public InventoryItem loadItem(String id) {
-        return itemsTable.getItem(item -> item.key(k -> k.partitionValue(id)));
+    public InventoryItem getItem(String id) {
+        return itemsTable.getItem(inventoryItem -> inventoryItem.key(k -> k.partitionValue(id)));
     }
 
-    public void deleteItem(InventoryItem item) {
-        itemsTable.deleteItem(item);
+    public void deleteItem(InventoryItem inventoryItem) {
+        itemsTable.deleteItem(inventoryItem);
     }
 }

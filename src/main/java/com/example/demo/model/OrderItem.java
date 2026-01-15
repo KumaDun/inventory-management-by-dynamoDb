@@ -12,7 +12,7 @@ public class OrderItem {
     private String customerId;
     private String orderTime;          // ISO 8601 String for DynamoDB
     private String orderId;
-    private List<OrderItem> items;
+    private List<OrderDetail> items;
     private String holdStartTime;
     private String holdExpiryTime;
     private String executionTime;
@@ -33,7 +33,7 @@ public class OrderItem {
         return orderId;
     }
 
-    public List<OrderItem> getItems() {
+    public List<OrderDetail> getItems() {
         return items;
     }
 
