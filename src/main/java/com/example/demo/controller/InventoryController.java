@@ -5,7 +5,8 @@ import com.example.demo.service.InventoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-@RestController@RequestMapping
+@RestController
+@RequestMapping("api/items")
 public class InventoryController {
     private final InventoryService inventoryService;
 

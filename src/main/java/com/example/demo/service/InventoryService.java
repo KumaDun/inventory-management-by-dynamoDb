@@ -18,7 +18,39 @@ public class InventoryService {
         itemsRepository.putItem(item);
     }
 
-    public InventoryItem getInventoryItem(String id) {
-        return itemsRepository.getItem(id);
+    public InventoryItem getInventoryItem(String itemId) {
+        return itemsRepository.getItem(itemId);
+    }
+
+    public void deleteInventoryItem(String itemId) {
+        itemsRepository.deleteItemById(itemId);
+    }
+
+    public void deleteInventoryItem(InventoryItem item) {
+        itemsRepository.deleteItemByItem(item);
+    }
+
+    public void updateStockLevelByItemId(String itemId, int stockLevel) {
+        itemsRepository.updateItemStockLevelByItemId(itemId, stockLevel);
+    }
+
+    public void updatePriceByItemId(String itemId, float price) {
+        itemsRepository.updateItemPriceByItemId(itemId, price);
+    }
+
+    public void updateNameByItemId(String itemId, String name) {
+        itemsRepository.updateItemNameByItemId(itemId, name);
+    }
+
+    public void updateThresholdByItemId(String itemId, int threshold) {
+        itemsRepository.updateThresholdByItemId(itemId, threshold);
+    }
+
+    public void updateDescriptionByItemId(String itemId, String description) {
+        itemsRepository.updateDescriptionByItemId(itemId, description);
+    }
+
+    public void updateAvailableByItemId(String itemId, boolean available) {
+        itemsRepository.updateAvailableByItemId(itemId, available);
     }
 }

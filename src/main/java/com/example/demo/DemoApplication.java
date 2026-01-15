@@ -11,8 +11,9 @@ public class DemoApplication {
 		SpringApplication.run(DemoApplication.class, args);
 		System.out.println("Welcome to the inventory management system");
 	}
+	//TODO OrderController need to be fullfilled
 	//TODO some key methods need to return boolean to indicate operation result
 	//TODO service layer need to catch exception thrown by DAO layer if db action fails
 	//TODO after creating table, need to wait some time before it's ready, use aws waiter
-	//TODO write Readme including bais maven configuration, EB deployment
+	//TODO write Readme including maven configuration, EB deployment
 }
