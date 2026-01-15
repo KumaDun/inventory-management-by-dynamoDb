@@ -52,4 +52,36 @@ public class OrderItem {
     public OrderStatus getStatus() {
         return status;
     }
+
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
+    }
+
+    public void setOrderTime(String orderTime) {
+        this.orderTime = orderTime;
+    }
+
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
+    }
+
+    public void setItems(List<OrderDetail> items) {
+        this.items = items;
+    }
+
+    public void setHoldStartTime(String holdStartTime) {
+        this.holdStartTime = holdStartTime;
+    }
+
+    public void setHoldExpiryTime(String holdExpiryTime) {
+        this.holdExpiryTime = holdExpiryTime;
+    }
+
+    public void setExecutionTime(String executionTime) {
+        this.executionTime = executionTime;
+    }
+
+    public void setStatus(OrderStatus status) {
+        this.status = status;
+    }
 }

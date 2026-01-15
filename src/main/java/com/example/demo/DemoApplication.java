@@ -1,12 +1,8 @@
 package com.example.demo;
 
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
 
-import java.util.Arrays;
 
 @SpringBootApplication
 public class DemoApplication {
@@ -16,7 +12,7 @@ public class DemoApplication {
 		System.out.println("Welcome to the inventory management system");
 	}
 	//TODO some key methods need to return boolean to indicate operation result
-	//TODO DynamoDB use environment variablest for credentials, configure it in AWS context
+	//TODO service layer need to catch exception thrown by DAO layer if db action fails
 	//TODO after creating table, need to wait some time before it's ready, use aws waiter
 	//TODO write Readme including bais maven configuration, EB deployment
 }
