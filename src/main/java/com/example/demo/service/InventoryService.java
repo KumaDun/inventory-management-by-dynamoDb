@@ -1,10 +1,10 @@
 package com.example.demo.service;
 
 import com.example.demo.dao.ItemsRepository;
-import com.example.demo.exceptions.daoExceptions.InventoryDaoConflictException;
-import com.example.demo.exceptions.daoExceptions.InventoryDaoPersistenceException;
-import com.example.demo.exceptions.serviceExceptions.InventoryOperationFailedException;
-import com.example.demo.exceptions.serviceExceptions.ItemAlreadyExistsException;
+import com.example.demo.exceptions.daoExceptions.DaoConflictException;
+import com.example.demo.exceptions.daoExceptions.DaoPersistenceException;
+import com.example.demo.exceptions.serviceExceptions.OperationFailedException;
+import com.example.demo.exceptions.serviceExceptions.ItemConflictException;
 import com.example.demo.model.InventoryItem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,44 +23,44 @@ public class InventoryService {
     public void putInventoryItem(InventoryItem item) {
         try {
             itemsRepository.putItem(item);
-        } catch (InventoryDaoConflictException ex) {
-            throw new ItemAlreadyExistsException("PutItem with id " + item.getItemId() + " already exists or condition check failed",
+        } catch (DaoConflictException ex) {
+            throw new ItemConflictException("PutItem with id " + item.getItemId() + " already exists or condition check failed",
                     ex);
-        } catch (InventoryDaoPersistenceException ex) {
-            throw new InventoryOperationFailedException("Database failure (putInventoryItem), please try later", ex);
+        } catch (DaoPersistenceException ex) {
+            throw new OperationFailedException("Database failure (putInventoryItem), please try later", ex);
         }
     }
 
     public Optional<InventoryItem> getInventoryItem(String itemId) {
         try {
             return itemsRepository.getItem(itemId);
-        } catch (InventoryDaoConflictException ex) {
-            throw new ItemAlreadyExistsException("getInventoryItem with id " + itemId + " already exists or condition check failed",
+        } catch (DaoConflictException ex) {
+            throw new ItemConflictException("getInventoryItem with id " + itemId + " already exists or condition check failed",
                     ex);
-        } catch (InventoryDaoPersistenceException ex) {
-            throw new InventoryOperationFailedException("Database failure (getInventoryItem), please try later", ex);
+        } catch (DaoPersistenceException ex) {
+            throw new OperationFailedException("Database failure (getInventoryItem), please try later", ex);
         }
     }
 
     public void deleteInventoryItem(String itemId) {
         try {
             itemsRepository.deleteItemById(itemId);
-        } catch (InventoryDaoConflictException ex) {
-            throw new ItemAlreadyExistsException("deleteInventoryItem with id " + itemId + " already exists or condition check failed",
+        } catch (DaoConflictException ex) {
+            throw new ItemConflictException("deleteInventoryItem with id " + itemId + " already exists or condition check failed",
                     ex);
-        } catch (InventoryDaoPersistenceException ex) {
-            throw new InventoryOperationFailedException("Database failure (deleteInventoryItem), please try later", ex);
+        } catch (DaoPersistenceException ex) {
+            throw new OperationFailedException("Database failure (deleteInventoryItem), please try later", ex);
         }
     }
 
     public void deleteInventoryItem(InventoryItem item) {
         try {
             itemsRepository.deleteItemByItem(item);
-        } catch (InventoryDaoConflictException ex) {
-            throw new ItemAlreadyExistsException("deleteInventoryItem with id " + item.getItemId() + " already exists or condition check failed",
+        } catch (DaoConflictException ex) {
+            throw new ItemConflictException("deleteInventoryItem with id " + item.getItemId() + " already exists or condition check failed",
                     ex);
-        } catch (InventoryDaoPersistenceException ex) {
-            throw new InventoryOperationFailedException("Database failure (deleteInventoryItem), please try later", ex);
+        } catch (DaoPersistenceException ex) {
+            throw new OperationFailedException("Database failure (deleteInventoryItem), please try later", ex);
         }
     }
 

@@ -1,6 +1,6 @@
 package com.example.demo.dao;
-import com.example.demo.exceptions.daoExceptions.InventoryDaoConflictException;
-import com.example.demo.exceptions.daoExceptions.InventoryDaoPersistenceException;
+import com.example.demo.exceptions.daoExceptions.DaoConflictException;
+import com.example.demo.exceptions.daoExceptions.DaoPersistenceException;
 import com.example.demo.model.InventoryItem;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -34,30 +34,29 @@ public class ItemsRepository {
         try {
             itemsTable.putItem(inventoryItem);
         } catch (ConditionalCheckFailedException ex) {
-            throw new InventoryDaoConflictException(
+            throw new DaoConflictException(
                     "Inventory item already exists or condition check failed",
                     ex
             );
         } catch (DynamoDbException ex) {
-            throw new InventoryDaoPersistenceException(
+            throw new DaoPersistenceException(
                     "DynamoDB putItem operation failed",
                     ex
             );
         }
     }
 
-
     public Optional<InventoryItem> getItem(String itemId) {
         try {
             InventoryItem item = itemsTable.getItem(inventoryItem -> inventoryItem.key(k -> k.partitionValue(itemId)));
             return Optional.ofNullable(item);
         } catch (ConditionalCheckFailedException ex) {
-            throw new InventoryDaoConflictException(
+            throw new DaoConflictException(
                     "Inventory getItem condition check failed",
                     ex
             );
         } catch (DynamoDbException ex) {
-            throw new InventoryDaoPersistenceException(
+            throw new DaoPersistenceException(
                     "DynamoDB getItem operation failed",
                     ex
             );
@@ -68,12 +67,12 @@ public class ItemsRepository {
         try {
             itemsTable.deleteItem(Key.builder().partitionValue(itemId).build());
         } catch (ConditionalCheckFailedException ex) {
-            throw new InventoryDaoConflictException(
+            throw new DaoConflictException(
                     "Inventory deleteItem condition check failed",
                     ex
             );
         } catch (DynamoDbException ex) {
-            throw new InventoryDaoPersistenceException(
+            throw new DaoPersistenceException(
                     "DynamoDB deleteItem operation failed",
                     ex
             );
@@ -84,12 +83,12 @@ public class ItemsRepository {
         try{
             itemsTable.deleteItem(inventoryItem);
         } catch (ConditionalCheckFailedException ex) {
-            throw new InventoryDaoConflictException(
+            throw new DaoConflictException(
                     "Inventory deleteItem condition check failed",
                     ex
             );
         } catch (DynamoDbException ex) {
-            throw new InventoryDaoPersistenceException(
+            throw new DaoPersistenceException(
                     "DynamoDB deleteItem operation failed",
                     ex
             );

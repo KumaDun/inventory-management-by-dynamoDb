@@ -1,7 +1,7 @@
 package com.example.demo.exceptions;
 
-import com.example.demo.exceptions.serviceExceptions.InventoryOperationFailedException;
-import com.example.demo.exceptions.serviceExceptions.ItemAlreadyExistsException;
+import com.example.demo.exceptions.serviceExceptions.OperationFailedException;
+import com.example.demo.exceptions.serviceExceptions.ItemConflictException;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,14 +10,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    @ExceptionHandler(ItemAlreadyExistsException.class)
-    public ResponseEntity<String> handleExists(ItemAlreadyExistsException ex) {
+    @ExceptionHandler(ItemConflictException.class)
+    public ResponseEntity<String> handleExists(ItemConflictException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ex.getMessage());
     }
 
-    @ExceptionHandler(InventoryOperationFailedException.class)
-    public ResponseEntity<String> handleDb(InventoryOperationFailedException ex) {
+    @ExceptionHandler(OperationFailedException.class)
+    public ResponseEntity<String> handleDb(OperationFailedException ex) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(ex.getMessage());
     }
