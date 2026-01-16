@@ -1,4 +1,6 @@
 package com.example.demo.dao;
+import com.example.demo.exceptions.daoExceptions.InventoryDaoConflictException;
+import com.example.demo.exceptions.daoExceptions.InventoryDaoPersistenceException;
 import com.example.demo.model.InventoryItem;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -10,7 +12,10 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
+import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
+import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 
 @Repository
@@ -26,19 +31,69 @@ public class ItemsRepository {
     }
 
     public void putItem(InventoryItem inventoryItem) {
-        itemsTable.putItem(inventoryItem);
+        try {
+            itemsTable.putItem(inventoryItem);
+        } catch (ConditionalCheckFailedException ex) {
+            throw new InventoryDaoConflictException(
+                    "Inventory item already exists or condition check failed",
+                    ex
+            );
+        } catch (DynamoDbException ex) {
+            throw new InventoryDaoPersistenceException(
+                    "DynamoDB putItem operation failed",
+                    ex
+            );
+        }
     }
 
-    public InventoryItem getItem(String itemId) {
-        return itemsTable.getItem(inventoryItem -> inventoryItem.key(k -> k.partitionValue(itemId)));
+
+    public Optional<InventoryItem> getItem(String itemId) {
+        try {
+            InventoryItem item = itemsTable.getItem(inventoryItem -> inventoryItem.key(k -> k.partitionValue(itemId)));
+            return Optional.ofNullable(item);
+        } catch (ConditionalCheckFailedException ex) {
+            throw new InventoryDaoConflictException(
+                    "Inventory getItem condition check failed",
+                    ex
+            );
+        } catch (DynamoDbException ex) {
+            throw new InventoryDaoPersistenceException(
+                    "DynamoDB getItem operation failed",
+                    ex
+            );
+        }
     }
 
     public void deleteItemById(String itemId) {
-        itemsTable.deleteItem(Key.builder().partitionValue(itemId).build());
+        try {
+            itemsTable.deleteItem(Key.builder().partitionValue(itemId).build());
+        } catch (ConditionalCheckFailedException ex) {
+            throw new InventoryDaoConflictException(
+                    "Inventory deleteItem condition check failed",
+                    ex
+            );
+        } catch (DynamoDbException ex) {
+            throw new InventoryDaoPersistenceException(
+                    "DynamoDB deleteItem operation failed",
+                    ex
+            );
+        }
     }
 
     public void deleteItemByItem(InventoryItem inventoryItem) {
-        itemsTable.deleteItem(inventoryItem);
+        try{
+            itemsTable.deleteItem(inventoryItem);
+        } catch (ConditionalCheckFailedException ex) {
+            throw new InventoryDaoConflictException(
+                    "Inventory deleteItem condition check failed",
+                    ex
+            );
+        } catch (DynamoDbException ex) {
+            throw new InventoryDaoPersistenceException(
+                    "DynamoDB deleteItem operation failed",
+                    ex
+            );
+        }
     }
 
     private void updateAttributeByItemId(String itemId, Consumer<InventoryItem> setter) {
