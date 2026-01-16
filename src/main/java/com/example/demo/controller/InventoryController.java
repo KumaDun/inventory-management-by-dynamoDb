@@ -19,28 +19,29 @@ public class InventoryController {
         this.inventoryService = inventoryService;
     }
 
-    @PostMapping("/add")
+    @PostMapping("/post")
     public ResponseEntity<Void> putInventoryItem(@RequestBody InventoryItem item) {
         inventoryService.putInventoryItem(item);
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<InventoryItem> getInventoryItem(@PathVariable String id) {
+    @GetMapping("/get")
+    public ResponseEntity<InventoryItem> getInventoryItem(@RequestParam String id) {
         Optional<InventoryItem> item = inventoryService.getInventoryItem(id);  // Delegate the action to the service
         return item.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteInventoryItem(@PathVariable String id) {
-        inventoryService.deleteInventoryItem(id);
-        return ResponseEntity.ok().build();
-    }
-
     @DeleteMapping("/delete")
-    public ResponseEntity<Void> deleteInventoryItem(@RequestBody InventoryItem item) {
-        inventoryService.deleteInventoryItem(item);
+    public ResponseEntity<Void> deleteInventoryItem(
+            @RequestParam(required = false) String id,
+            @RequestBody(required = false) InventoryItem item) {
+        if (id != null && !id.isEmpty()) {
+            inventoryService.deleteInventoryItem(id);
+        } else if (item != null) {
+            inventoryService.deleteInventoryItem(item);
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
         return ResponseEntity.ok().build();
     }
-
 }

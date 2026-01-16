@@ -20,13 +20,11 @@ import java.util.function.Consumer;
 
 @Repository
 public class ItemsRepository {
-    private final DynamoDbEnhancedClient enhancedClient;
     private final DynamoDbTable<InventoryItem> itemsTable;
 
     @Autowired
     public ItemsRepository(DynamoDbEnhancedClient enhancedClient,
                            @Value("${dynamodb.inventory.table.itemsTable.name}") String tableName) {
-        this.enhancedClient = enhancedClient;
         this.itemsTable = enhancedClient.table(tableName, TableSchema.fromBean(InventoryItem.class));
     }
 
@@ -99,7 +97,7 @@ public class ItemsRepository {
         InventoryItem inventoryItem = new InventoryItem();
         inventoryItem.setItemId(itemId);
         setter.accept(inventoryItem);
-        itemsTable.updateItem(UpdateItemEnhancedRequest.<InventoryItem>builder(InventoryItem.class)
+        itemsTable.updateItem(UpdateItemEnhancedRequest.builder(InventoryItem.class)
                 .item(inventoryItem)
                 .ignoreNulls(true)
                 .build());

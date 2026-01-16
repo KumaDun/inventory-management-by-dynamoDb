@@ -20,13 +20,11 @@ import java.util.Optional;
 
 @Repository
 public class OrderRepository {
-    private final DynamoDbEnhancedClient enhancedClient;
     private final DynamoDbTable<OrderItem> orderTable;
 
     @Autowired
     public OrderRepository(DynamoDbEnhancedClient enhancedClient,
                            @Value("${dynamodb.inventory.table.ordersTable.name}") String tableName) {
-        this.enhancedClient = enhancedClient;
         this.orderTable = enhancedClient.table(tableName, TableSchema.fromBean(OrderItem.class));
     }
 
@@ -136,7 +134,7 @@ public class OrderRepository {
         orderToUpdate.setOrderTime(orderTime);
         orderToUpdate.setStatus(status);
         UpdateItemEnhancedRequest<OrderItem> request =
-                UpdateItemEnhancedRequest.<OrderItem>builder(OrderItem.class)
+                UpdateItemEnhancedRequest.builder(OrderItem.class)
                         .item(orderToUpdate)
                         .ignoreNulls(true)
                         .build();
@@ -150,7 +148,7 @@ public class OrderRepository {
             newOrder.setCustomerId(orderItem.getCustomerId());
             newOrder.setOrderTime(orderItem.getOrderTime());
             newOrder.setStatus(status);
-            orderTable.updateItem(UpdateItemEnhancedRequest.<OrderItem>builder(OrderItem.class)
+            orderTable.updateItem(UpdateItemEnhancedRequest.builder(OrderItem.class)
                             .item(newOrder)
                             .ignoreNulls(true)
                             .build());

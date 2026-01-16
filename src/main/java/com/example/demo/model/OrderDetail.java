@@ -1,5 +1,8 @@
 package com.example.demo.model;
 
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+
+@DynamoDbBean
 public class OrderDetail {
     private String itemId;
     private int quantity;
