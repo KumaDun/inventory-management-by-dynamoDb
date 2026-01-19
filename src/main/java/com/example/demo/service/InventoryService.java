@@ -20,9 +20,9 @@ public class InventoryService {
         this.itemsRepository = itemsRepository;
     }
 
-    public void putInventoryItem(InventoryItem item) {
+    public Optional<InventoryItem> putInventoryItem(InventoryItem item) {
         try {
-            itemsRepository.putItem(item);
+            return itemsRepository.putItem(item);
         } catch (DaoConflictException ex) {
             throw new ItemConflictException("PutItem with id " + item.getItemId() + " already exists or condition check failed",
                     ex);

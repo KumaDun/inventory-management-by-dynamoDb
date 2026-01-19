@@ -20,9 +20,9 @@ public class InventoryController {
     }
 
     @PostMapping("/post")
-    public ResponseEntity<Void> putInventoryItem(@RequestBody InventoryItem item) {
-        inventoryService.putInventoryItem(item);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Optional<InventoryItem>> putInventoryItem(@RequestBody InventoryItem item) {
+        Optional<InventoryItem> saved = inventoryService.putInventoryItem(item);
+        return ResponseEntity.ok(saved);
     }
 
     @GetMapping("/get")

@@ -28,9 +28,10 @@ public class ItemsRepository {
         this.itemsTable = enhancedClient.table(tableName, TableSchema.fromBean(InventoryItem.class));
     }
 
-    public void putItem(InventoryItem inventoryItem) {
+    public Optional<InventoryItem> putItem(InventoryItem inventoryItem) {
         try {
             itemsTable.putItem(inventoryItem);
+            return Optional.ofNullable(inventoryItem);
         } catch (ConditionalCheckFailedException ex) {
             throw new DaoConflictException(
                     "Inventory item already exists or condition check failed",
