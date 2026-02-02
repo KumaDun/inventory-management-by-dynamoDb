@@ -1,4 +1,5 @@
 package com.example.demo.dao;
+
 import com.example.demo.exceptions.daoExceptions.DaoConflictException;
 import com.example.demo.exceptions.daoExceptions.DaoPersistenceException;
 import com.example.demo.model.InventoryItem;
@@ -24,7 +25,7 @@ public class ItemsRepository {
 
     @Autowired
     public ItemsRepository(DynamoDbEnhancedClient enhancedClient,
-                           @Value("${dynamodb.inventory.table.itemsTable.name}") String tableName) {
+            @Value("${dynamodb.inventory.table.itemsTable.name}") String tableName) {
         this.itemsTable = enhancedClient.table(tableName, TableSchema.fromBean(InventoryItem.class));
     }
 
@@ -35,13 +36,11 @@ public class ItemsRepository {
         } catch (ConditionalCheckFailedException ex) {
             throw new DaoConflictException(
                     "Inventory item already exists or condition check failed",
-                    ex
-            );
+                    ex);
         } catch (DynamoDbException ex) {
             throw new DaoPersistenceException(
                     "DynamoDB putItem operation failed",
-                    ex
-            );
+                    ex);
         }
     }
 
@@ -52,13 +51,11 @@ public class ItemsRepository {
         } catch (ConditionalCheckFailedException ex) {
             throw new DaoConflictException(
                     "Inventory getItem condition check failed",
-                    ex
-            );
+                    ex);
         } catch (DynamoDbException ex) {
             throw new DaoPersistenceException(
                     "DynamoDB getItem operation failed",
-                    ex
-            );
+                    ex);
         }
     }
 
@@ -68,29 +65,25 @@ public class ItemsRepository {
         } catch (ConditionalCheckFailedException ex) {
             throw new DaoConflictException(
                     "Inventory deleteItem condition check failed",
-                    ex
-            );
+                    ex);
         } catch (DynamoDbException ex) {
             throw new DaoPersistenceException(
                     "DynamoDB deleteItem operation failed",
-                    ex
-            );
+                    ex);
         }
     }
 
     public void deleteItemByItem(InventoryItem inventoryItem) {
-        try{
+        try {
             itemsTable.deleteItem(inventoryItem);
         } catch (ConditionalCheckFailedException ex) {
             throw new DaoConflictException(
                     "Inventory deleteItem condition check failed",
-                    ex
-            );
+                    ex);
         } catch (DynamoDbException ex) {
             throw new DaoPersistenceException(
                     "DynamoDB deleteItem operation failed",
-                    ex
-            );
+                    ex);
         }
     }
 
@@ -126,5 +119,15 @@ public class ItemsRepository {
 
     public void updateAvailableByItemId(String itemId, boolean available) {
         this.updateAttributeByItemId(itemId, item -> item.setAvailable(available));
+    }
+
+    public Iterable<InventoryItem> scanItems() {
+        try {
+            return itemsTable.scan().items();
+        } catch (DynamoDbException ex) {
+            throw new DaoPersistenceException(
+                    "DynamoDB scan operation failed",
+                    ex);
+        }
     }
 }

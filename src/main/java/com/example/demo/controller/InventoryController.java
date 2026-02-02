@@ -11,6 +11,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("api/items")
+@CrossOrigin(origins = "*")
 public class InventoryController {
     private final InventoryService inventoryService;
 
@@ -27,8 +28,13 @@ public class InventoryController {
 
     @GetMapping("/get")
     public ResponseEntity<InventoryItem> getInventoryItem(@RequestParam String id) {
-        Optional<InventoryItem> item = inventoryService.getInventoryItem(id);  // Delegate the action to the service
+        Optional<InventoryItem> item = inventoryService.getInventoryItem(id); // Delegate the action to the service
         return item.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<Iterable<InventoryItem>> getAllInventoryItems() {
+        return ResponseEntity.ok(inventoryService.getInventoryItems());
     }
 
     @DeleteMapping("/delete")

@@ -24,7 +24,8 @@ public class InventoryService {
         try {
             return itemsRepository.putItem(item);
         } catch (DaoConflictException ex) {
-            throw new ItemConflictException("PutItem with id " + item.getItemId() + " already exists or condition check failed",
+            throw new ItemConflictException(
+                    "PutItem with id " + item.getItemId() + " already exists or condition check failed",
                     ex);
         } catch (DaoPersistenceException ex) {
             throw new OperationFailedException("Database failure (putInventoryItem), please try later", ex);
@@ -35,7 +36,8 @@ public class InventoryService {
         try {
             return itemsRepository.getItem(itemId);
         } catch (DaoConflictException ex) {
-            throw new ItemConflictException("getInventoryItem with id " + itemId + " already exists or condition check failed",
+            throw new ItemConflictException(
+                    "getInventoryItem with id " + itemId + " already exists or condition check failed",
                     ex);
         } catch (DaoPersistenceException ex) {
             throw new OperationFailedException("Database failure (getInventoryItem), please try later", ex);
@@ -46,7 +48,8 @@ public class InventoryService {
         try {
             itemsRepository.deleteItemById(itemId);
         } catch (DaoConflictException ex) {
-            throw new ItemConflictException("deleteInventoryItem with id " + itemId + " already exists or condition check failed",
+            throw new ItemConflictException(
+                    "deleteInventoryItem with id " + itemId + " already exists or condition check failed",
                     ex);
         } catch (DaoPersistenceException ex) {
             throw new OperationFailedException("Database failure (deleteInventoryItem), please try later", ex);
@@ -57,7 +60,8 @@ public class InventoryService {
         try {
             itemsRepository.deleteItemByItem(item);
         } catch (DaoConflictException ex) {
-            throw new ItemConflictException("deleteInventoryItem with id " + item.getItemId() + " already exists or condition check failed",
+            throw new ItemConflictException(
+                    "deleteInventoryItem with id " + item.getItemId() + " already exists or condition check failed",
                     ex);
         } catch (DaoPersistenceException ex) {
             throw new OperationFailedException("Database failure (deleteInventoryItem), please try later", ex);
@@ -86,5 +90,9 @@ public class InventoryService {
 
     public void updateAvailableByItemId(String itemId, boolean available) {
         itemsRepository.updateAvailableByItemId(itemId, available);
+    }
+
+    public Iterable<InventoryItem> getInventoryItems() {
+        return itemsRepository.scanItems();
     }
 }
