@@ -92,7 +92,7 @@ public class InventoryService {
         itemsRepository.updateAvailableByItemId(itemId, available);
     }
 
-    public Iterable<InventoryItem> getInventoryItems() {
+    public java.util.List<InventoryItem> getInventoryItems() {
         return itemsRepository.scanItems();
     }
 }

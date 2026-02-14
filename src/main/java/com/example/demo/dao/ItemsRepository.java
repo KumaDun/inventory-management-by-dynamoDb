@@ -12,12 +12,15 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.List;
+import java.util.ArrayList;
 
 @Repository
 public class ItemsRepository {
@@ -121,9 +124,11 @@ public class ItemsRepository {
         this.updateAttributeByItemId(itemId, item -> item.setAvailable(available));
     }
 
-    public Iterable<InventoryItem> scanItems() {
+    public List<InventoryItem> scanItems() {
         try {
-            return itemsTable.scan().items();
+            List<InventoryItem> result = new ArrayList<>();
+            itemsTable.scan(ScanEnhancedRequest.builder().consistentRead(true).build()).items().forEach(result::add);
+            return result;
         } catch (DynamoDbException ex) {
             throw new DaoPersistenceException(
                     "DynamoDB scan operation failed",

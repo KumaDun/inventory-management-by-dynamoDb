@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Edit2, Trash2, Box, AlertTriangle } from 'lucide-react';
+import { Edit2, Trash2, Box, AlertTriangle, Search } from 'lucide-react';
 import { inventoryApi } from '../api/inventoryApi';
 import { InventoryItem } from '../types';
 
@@ -39,44 +39,84 @@ const InventoryList: React.FC<InventoryListProps> = ({ onEdit, refreshTrigger })
         }
     };
 
-    if (loading) return <div className="text-center p-10 text-gray-400">Loading inventory...</div>;
-
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.map((item) => (
-                <div key={item.itemId} className="glass-panel p-6 relative group hover:bg-gray-800/50 transition-colors">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className={`p-3 rounded-lg ${item.available ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
-                            <Box className={`w-6 h-6 ${item.available ? 'text-green-400' : 'text-red-400'}`} />
-                        </div>
-                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => onEdit(item)} className="p-2 hover:bg-blue-500/20 rounded-lg text-blue-400">
-                                <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => handleDelete(item.itemId)} className="p-2 hover:bg-red-500/20 rounded-lg text-red-400">
-                                <Trash2 className="w-4 h-4" />
-                            </button>
-                        </div>
-                    </div>
-
-                    <h3 className="text-lg font-semibold mb-1">{item.name}</h3>
-                    <p className="text-gray-400 text-sm mb-4 line-clamp-2">{item.description}</p>
-
-                    <div className="flex justify-between items-end">
-                        <div>
-                            <p className="text-sm text-gray-500">Price</p>
-                            <p className="text-xl font-bold text-white">${item.price}</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-sm text-gray-500">Stock</p>
-                            <div className={`flex items-center gap-1 ${item.stockLevel < item.threshold ? 'text-orange-400' : 'text-white'}`}>
-                                {item.stockLevel < item.threshold && <AlertTriangle className="w-3 h-3" />}
-                                <span className="text-xl font-bold">{item.stockLevel}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            ))}
+        <div className="table-container">
+            <table className="w-full">
+                <thead>
+                    <tr>
+                        <th className="w-12"></th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Status</th>
+                        <th className="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {loading ? (
+                        <tr>
+                            <td colSpan={7} className="text-center py-10 text-gray-500">
+                                Loading inventory...
+                            </td>
+                        </tr>
+                    ) : items.length === 0 ? (
+                        <tr>
+                            <td colSpan={7} className="text-center py-12">
+                                <div className="flex flex-col items-center gap-3 text-gray-400">
+                                    <div className="p-4 bg-gray-50 rounded-full">
+                                        <Search className="w-6 h-6" />
+                                    </div>
+                                    <p>No inventory items found. Add your first item above.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    ) : (
+                        items.map((item) => (
+                            <tr key={item.itemId} className="group transition-colors hover:bg-white/50">
+                                <td>
+                                    <div className={`p-2 rounded-lg inline-flex ${item.available ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                                        <Box className="w-5 h-5" />
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <div className="font-semibold">{item.name}</div>
+                                        <div className="text-xs text-gray-500 line-clamp-1">{item.description}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full font-medium">
+                                        {item.category || 'Uncategorized'}
+                                    </span>
+                                </td>
+                                <td className="font-medium">${item.price.toFixed(2)}</td>
+                                <td>
+                                    <div className={`flex items-center gap-2 ${item.stockLevel < item.threshold ? 'text-orange-600 font-bold' : ''}`}>
+                                        {item.stockLevel < item.threshold && <AlertTriangle className="w-4 h-4" />}
+                                        {item.stockLevel}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${item.available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                        {item.available ? 'Active' : 'Archived'}
+                                    </span>
+                                </td>
+                                <td className="text-right">
+                                    <div className="flex justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => onEdit(item)} className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors">
+                                            <Edit2 className="w-4 h-4" />
+                                        </button>
+                                        <button onClick={() => handleDelete(item.itemId)} className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))
+                    )}
+                </tbody>
+            </table>
         </div>
     );
 };
