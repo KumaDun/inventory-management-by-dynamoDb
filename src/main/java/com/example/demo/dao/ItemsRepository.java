@@ -8,16 +8,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.Key;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.*;
+import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.List;
 import java.util.ArrayList;
@@ -34,7 +33,21 @@ public class ItemsRepository {
 
     public Optional<InventoryItem> putItem(InventoryItem inventoryItem) {
         try {
-            itemsTable.putItem(inventoryItem);
+            if (inventoryItem.getItemId() == null || inventoryItem.getItemId().isBlank()) {
+                inventoryItem.setItemId(UUID.randomUUID().toString());
+            }
+            // 2) Condition: don't overwrite if itemId already exists
+            Expression notExists = Expression.builder()
+                    .expression("attribute_not_exists(#pk)")
+                    .expressionNames(java.util.Map.of("#pk", "itemId"))
+                    .build();
+            PutItemEnhancedRequest<InventoryItem> request =
+                    PutItemEnhancedRequest.builder(InventoryItem.class)
+                            .item(inventoryItem)
+                            .conditionExpression(notExists)
+                            .build();
+            itemsTable.putItem(request);
+
             return Optional.ofNullable(inventoryItem);
         } catch (ConditionalCheckFailedException ex) {
             throw new DaoConflictException(

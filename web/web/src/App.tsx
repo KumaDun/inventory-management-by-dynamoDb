@@ -6,20 +6,7 @@ import {Header} from '@/components/ui/header.tsx'
 import { InventoryItemCard} from "@/components/component/inventoryItemCard.tsx";
 import { InventoryTable } from "@/components/component/inventoryTable.tsx";
 import {Card, CardContent, CardFooter, CardHeader, CardTitle} from "@/components/ui/card.tsx";
-import {Button} from "@/components/ui/button.tsx";
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger
-} from "@/components/ui/dialog.tsx";
-import {Field, FieldGroup} from "@/components/ui/field.tsx";
-import {Label} from "@/components/ui/label.tsx";
-import {Input} from "@/components/ui/input.tsx";
+import {InventoryPop} from "@/components/component/inventoryPop.tsx";
 
 
 function App() {
@@ -55,48 +42,10 @@ function App() {
                 </CardContent>
                 <CardFooter>
                     <div className="flex w-full justify-end">
-                        <Button
-                            onClick = {() => setIsAddingItem(true)}
-                        >Add New Item</Button>
+                        <InventoryPop></InventoryPop>
                     </div>
                 </CardFooter>
             </Card>
-
-            <Dialog>
-                <form>
-                    <DialogTrigger asChild>
-                        <Button variant="outline">Open Dialog</Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-sm">
-                        <DialogHeader>
-                            <DialogTitle>Edit profile</DialogTitle>
-                            <DialogDescription>
-                                Make changes to your profile here. Click save when you&apos;re
-                                done.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <FieldGroup>
-                            <Field>
-                                <Label htmlFor="name-1">Name</Label>
-                                <Input id="name-1" name="name" defaultValue="Pedro Duarte" />
-                            </Field>
-                            <Field>
-                                <Label htmlFor="username-1">Username</Label>
-                                <Input id="username-1" name="username" defaultValue="@peduarte" />
-                            </Field>
-                        </FieldGroup>
-                        <DialogFooter>
-                            <DialogClose asChild>
-                                <Button variant="outline">Cancel</Button>
-                            </DialogClose>
-                            <Button type="submit">Save changes</Button>
-                        </DialogFooter>
-                        {/*<InventoryItemCard*/}
-                        {/*    onClose = {() => setIsAddingItem(false)}*/}
-                        {/*></InventoryItemCard>*/}
-                    </DialogContent>
-                </form>
-            </Dialog>
 
         </div>
 

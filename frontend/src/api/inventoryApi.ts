@@ -14,10 +14,6 @@ export const inventoryApi = {
         const response = await api.post<InventoryItem>('/items/post', item);
         return response.data;
     },
-    updateItem: async (item: InventoryItem): Promise<InventoryItem> => {
-        const response = await api.post<InventoryItem>('/items/post', item);
-        return response.data;
-    },
     deleteItem: async (id: string): Promise<void> => {
         await api.delete(`/items/delete?id=${id}`);
     }

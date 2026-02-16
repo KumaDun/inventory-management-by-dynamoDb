@@ -34,6 +34,7 @@ public class InventoryController {
 
     @GetMapping("/all")
     public ResponseEntity<Iterable<InventoryItem>> getAllInventoryItems() {
+        System.out.println("InventoryController /all");
         return ResponseEntity.ok(inventoryService.getInventoryItems());
     }
 
