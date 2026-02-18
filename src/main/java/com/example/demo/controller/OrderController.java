@@ -9,7 +9,15 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/orders")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = {
+        "https://inventory-management-system-kumadun.vercel.app/"
+},
+        methods = {
+                RequestMethod.GET,
+                RequestMethod.POST,
+                RequestMethod.PATCH,
+                RequestMethod.DELETE
+        })
 public class OrderController {
     private final OrderService orderService;
 

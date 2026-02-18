@@ -11,7 +11,15 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("api/items")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = {
+        "https://inventory-management-system-kumadun.vercel.app/"
+},
+        methods = {
+                RequestMethod.GET,
+                RequestMethod.POST,
+                RequestMethod.PATCH,
+                RequestMethod.DELETE
+        })
 public class InventoryController {
     private final InventoryService inventoryService;
 
