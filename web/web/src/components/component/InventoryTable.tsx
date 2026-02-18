@@ -21,7 +21,6 @@ export function InventoryTable() {
     const [refreshTrigger, setRefreshTrigger] = useState<boolean>(false)
     const [isLoading, setIsLoading] = useState(false)
     const [isUpdating, setIsUpdating] = useState<boolean>(false)
-    const [isEditing, setIsEditing] = useState<boolean>(false)
     const [items, setItems] = useState([{
         itemId: "INV001",
         name: "iPhone 17 Air",
@@ -81,21 +80,20 @@ export function InventoryTable() {
                     {!isLoading && items.map((item: InventoryItem) => (
                         <TableRow key={item.itemId} onClick={() => {
                         }}>
-                            <TableCell className="text-left font-medium">{isUpdating ? <Spinner/> : item.itemId}</TableCell>
-                            <TableCell className="text-left font-medium ">{isUpdating ? <Spinner/> : item.name}</TableCell>
-                            <TableCell className="text-left ">{isUpdating ? <Spinner/> : item.description}</TableCell>
-                            <TableCell className="text-left ">{isUpdating ? <Spinner/> : item.price}</TableCell>
-                            <TableCell className="text-left ">{isUpdating ? <Spinner/> : item.stockLevel}</TableCell>
-                            <TableCell className="text-left">{isUpdating ? <Spinner/> : item.category}</TableCell>
-                            <TableCell className="text-left">{isUpdating ? <Spinner/> : item.threshold}</TableCell>
-                            <TableCell className="text-left">{isUpdating ? <Spinner/> : String(item.isAvailable)}</TableCell>
+                            <TableCell className="text-left font-medium">{item.itemId}</TableCell>
+                            <TableCell className="text-left font-medium ">{item.name}</TableCell>
+                            <TableCell className="text-left ">{item.description}</TableCell>
+                            <TableCell className="text-left ">{item.price}</TableCell>
+                            <TableCell className="text-left ">{item.stockLevel}</TableCell>
+                            <TableCell className="text-left">{item.category}</TableCell>
+                            <TableCell className="text-left">{item.threshold}</TableCell>
+                            <TableCell className="text-left">{String(item.isAvailable)}</TableCell>
                             <TableCell>
                                 <div className={"flex gap-0.5 justify-around"}>
                                     <ItemMedia
                                         className="size-6 hover:bg-gray-200 active:bg-gray-300"
                                         onClick={() => {
                                             setItem(item)
-                                            setIsEditing(true)
                                             setIsUpdating(true)
                                         }}
                                     >
@@ -133,8 +131,7 @@ export function InventoryTable() {
             </Table>
             <UpdatePop
                 isOpen={isUpdating}
-                onIsOpenChange={setIsEditing}
-                onFinishUpdate = {() => setIsUpdating(false)}
+                onIsOpenChange={setIsUpdating}
                 onRefreshTrigger={() => setRefreshTrigger(prevState => !prevState)}
                 item={item}></UpdatePop>
         </div>
