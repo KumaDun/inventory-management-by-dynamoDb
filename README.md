@@ -17,7 +17,7 @@ DynamoDB is a good fit for this workload for two practical reasons:
 The trade-off is intentional: complex ad-hoc filtering and relational joins are harder. For this service, predictable latency on known access patterns is more important.
 
 AWS references:
-- DynamoDB performance at scale: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html
+- DynamoDB introduction: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html
 - DynamoDB on-demand capacity mode: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/on-demand-capacity-mode.html
 - Best practices for designing with DynamoDB: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/best-practices.html
 
@@ -70,7 +70,7 @@ Not implemented yet:
 
 ## Prerequisites
 
-- Java 17+ (JDK): https://adoptium.net/temurin/releases/
+- Java 17+ (JDK): https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html
 - Maven 3.9+ (or use included Maven Wrapper `mvnw`): https://maven.apache.org/install.html
 - Node.js 20+ (includes npm): https://nodejs.org/en/download
 - npm 10+ docs: https://docs.npmjs.com/downloading-and-installing-node-js-and-npm
@@ -80,8 +80,9 @@ IDE note:
 - This project is a Maven project. In IntelliJ IDEA, import/open it as a Maven project so dependencies are resolved from `pom.xml` and `mvnw`.
 - IntelliJ Maven docs: https://www.jetbrains.com/help/idea/maven-support.html
 
-AWS credentials provider chain (concise):
+AWS credentials provider chain:
 - The AWS SDK for Java v2 resolves credentials in a default order (for example: environment variables, shared credentials/config files, then attached IAM role credentials in AWS runtime environments).
+- This project is build with a aws credentials in local environment. Cloners can choose any valid way to configure their aws credentials as listed in references.
 - For local development, `aws configure` usually writes the shared files used by that chain.
 - References:
   - Default credentials provider chain (Java v2): https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/credentials-chain.html
@@ -131,6 +132,7 @@ npm install -D shadcn
 ```
 
 Initialize or re-initialize shadcn if needed:
+This would a from scratch initialization of the frontend. See the ShadCn initialization reference here https://ui.shadcn.com/docs/installation
 
 ```bash
 npx shadcn@latest init
