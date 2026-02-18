@@ -1,3 +1,5 @@
+import iconUrl from "@/assets/GitHub_Invertocat_Black_Clearspace.svg";
+
 export function Header() {
     return (
         <div className="flex justify-center items-center p-6">
@@ -5,7 +7,7 @@ export function Header() {
                 Inventory Management System
             </h1>
             <a href="https://github.com/KumaDun/inventory-management-by-dynamoDb" target="_blank">
-                <img src="public/GitHub_Invertocat_Black_Clearspace.svg" className="logo" alt="Vite logo" />
+                <img src={iconUrl} className="logo" alt="Vite logo" />
             </a>
         </div>
     )
