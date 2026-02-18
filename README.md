@@ -1,147 +1,332 @@
-# 📦 Scalable Inventory Management System using DynamoDB
+# Inventory Management System (Spring Boot + DynamoDB + React)
 
-Access real-time inventory insights with our high-performance, scalable solution designed for modern e-commerce needs.
+This project is a reference implementation for an inventory/order service that prioritizes low-latency reads and predictable write behavior under burst traffic.
 
-## 🚀 The Problem
-Managing inventory at scale presents unique challenges:
-*   **Race Conditions**: Simultaneous orders can lead to overselling.
-*   **Scalability**: Traditional relational databases struggle with high-throughput read/write spikes during flash sales.
-*   **Latency**: Users demand instant feedback on product availability.
+## Why DynamoDB for this project
 
-This project solves these pain points by leveraging **AWS DynamoDB** for single-digit millisecond latency and seamless scalability, coupled with a reactive **Spring Boot** backend and a responsive **React** frontend.
+DynamoDB is a good fit for this workload for two practical reasons:
 
-## 🏗️ Architecture
+1. Scalability without capacity planning bottlenecks
+- Inventory and order traffic is usually spiky (promotions, batch updates, retries).
+- DynamoDB on-demand mode scales request throughput automatically, so you do not need to resize a relational instance during peaks.
 
-```mermaid
-graph LR
-    User[User/Client] -->|HTTP/REST| Frontend[React + Vite]
-    Frontend -->|API Calls| Backend[Spring Boot Service]
-    Backend -->|AWS SDK| DB[(Amazon DynamoDB)]
-    Backend -->|Deploy| EB[AWS Elastic Beanstalk]
-```
+2. Low and stable latency for key-based access
+- Core operations in this codebase are key-centric (`GetItem`, `Query`, atomic `UpdateItem`) rather than join-heavy reporting.
+- DynamoDB is designed for single-digit millisecond access on these patterns, which keeps API response times stable as data volume grows.
 
-## 🛠️ Core Workflows
+The trade-off is intentional: complex ad-hoc filtering and relational joins are harder. For this service, predictable latency on known access patterns is more important.
 
-1.  **Create Inventory Item**: Admin adds new products with initial stock levels.
-2.  **Adjust Stock**: Real-time updates to inventory count (decrement on order, increment on restock). Handles concurrency to prevent race conditions.
-3.  **Order Processing**: Creates orders, links them to customers, and tracks status (Pending -> Executed).
-4.  **Search & Retrieval**: Efficient lookups by Item ID or Order ID.
+AWS references:
+- DynamoDB performance at scale: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html
+- DynamoDB on-demand capacity mode: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/on-demand-capacity-mode.html
+- Best practices for designing with DynamoDB: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/best-practices.html
 
-## 📊 DynamoDB Modeling
+## Current scope
 
-This project follows an access-pattern-driven design to maximize DynamoDB efficiency.
+Implemented:
+- Inventory CRUD-style endpoints (`/api/items/post`, `/api/items/get`, `/api/items/all`, `/api/items/delete`)
+- Order create/delete endpoints (`/api/orders/add`, `/api/orders/delete`)
+- DynamoDB-backed persistence using AWS SDK v2 + Enhanced Client
+- Frontend in `web/web` (Vite + React + Tailwind + shadcn setup)
+
+Not implemented yet:
+- Pagination
+- Filtering
+
+## TODO
+
+- Add pagination for inventory and order listing APIs (cursor/`LastEvaluatedKey` based)
+- Add server-side filtering support for inventory/order queries
+- Add API contract docs (request/response examples + error model)
+- Add integration tests against DynamoDB Local/Testcontainers
+- Add CI pipeline (build + test + lint)
+
+## Repository structure
+
+- `src/main/java` - Spring Boot backend
+- `pom.xml` - backend dependency management and build
+- `src/main/resources/application.properties` - backend config (`PORT`, `aws.region`, table names)
+- `web/web` - frontend (Vite + React + TypeScript)
+
+## Data model (DynamoDB)
 
 ### Table: `InventoryItems`
-*   **Partition Key (PK)**: `itemId` (String)
-*   **Sort Key (SK)**: *None*
-*   **Billing Mode**: On-Demand (Recommended for sporadic traffic)
-*   **Access Pattern**:
-    *   `GetItem`: Retrieve product details by ID.
-    *   `UpdateItem`: Atomic decrement/increment of stock.
+- Partition key: `itemId` (String)
+- Access patterns:
+  - Get one item by id
+  - Update item by id
+  - Delete item by id
+  - Scan/list all items (currently no pagination/filtering)
 
 ### Table: `OrderItems`
-*   **Partition Key (PK)**: `customerId` (String)
-*   **Sort Key (SK)**: `orderTime` (String - ISO 8601)
-*   **GSI**: `orderIdIndex` (PK: `orderId`)
-*   **Billing Mode**: On-Demand
-*   **Access Patterns**:
-    *   **Get User Orders**: Query by `customerId` sorted by `orderTime` (default).
-    *   **Get Specific Order**: Query GSI `orderIdIndex` by `orderId`.
+- Partition key: `customerId` (String)
+- Sort key: `orderTime` (String, ISO-8601)
+- GSI: `orderIdIndex` (partition key: `orderId`)
+- Access patterns:
+  - Query customer orders by time
+  - Query by order id through GSI
 
-## 📦 Dependency Management (POM)
-The project uses `pom.xml` to manage dependencies efficiently:
-*   **AWS SDK v2 BOM**: Uses `software.amazon.awssdk:bom` in the `<dependencyManagement>` section. This ensures all AWS SDK modules (like `dynamodb` and `dynamodb-enhanced`) use compatible versions without specifying versions for each dependency.
-*   **DynamoDB Enhanced Client**: Uses `dynamodb-enhanced` to map Java objects directly to DynamoDB tables using annotations, reducing boilerplate code.
+## Local development (build + run)
 
-## 🔒 IAM & Security (Required for Deployment)
-When running on AWS (e.g., Elastic Beanstalk), the application needs specific permissions. Create an **IAM Role** and attach it to your EC2 Instance Profile.
+## Prerequisites
 
-**Recommended Policy:**
+- Java 17+ (JDK): https://adoptium.net/temurin/releases/
+- Maven 3.9+ (or use included Maven Wrapper `mvnw`): https://maven.apache.org/install.html
+- Node.js 20+ (includes npm): https://nodejs.org/en/download
+- npm 10+ docs: https://docs.npmjs.com/downloading-and-installing-node-js-and-npm
+- AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+
+IDE note:
+- This project is a Maven project. In IntelliJ IDEA, import/open it as a Maven project so dependencies are resolved from `pom.xml` and `mvnw`.
+- IntelliJ Maven docs: https://www.jetbrains.com/help/idea/maven-support.html
+
+AWS credentials provider chain (concise):
+- The AWS SDK for Java v2 resolves credentials in a default order (for example: environment variables, shared credentials/config files, then attached IAM role credentials in AWS runtime environments).
+- For local development, `aws configure` usually writes the shared files used by that chain.
+- References:
+  - Default credentials provider chain (Java v2): https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/credentials-chain.html
+  - Shared `credentials` and `config` files: https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html
+
+## 1) Backend setup
+
+From repo root:
+
+```bash
+./mvnw clean compile
+./mvnw spring-boot:run
+```
+
+Backend runs on `http://localhost:5000` by default (`server.port=${PORT:5000}`).
+
+Required AWS settings for local run:
+- Region must match your DynamoDB tables (`aws.region` in `application.properties`, default `us-east-1`)
+- Credentials must have DynamoDB permissions for both tables and `orderIdIndex`
+
+Quick credential validation:
+
+```bash
+aws sts get-caller-identity
+aws dynamodb list-tables --region us-east-1
+```
+
+## 2) Frontend setup (`web/web`)
+
+```bash
+cd web/web
+npm install
+npm run dev
+```
+
+Frontend runs on `http://localhost:5173`.
+
+## 3) shadcn usage and dependencies
+
+This frontend is already configured for shadcn (`web/web/components.json` exists), but on a fresh checkout you should run:
+
+```bash
+cd web/web
+npm install
+npm install clsx tailwind-merge class-variance-authority lucide-react
+npm install -D shadcn
+```
+
+Initialize or re-initialize shadcn if needed:
+
+```bash
+npx shadcn@latest init
+```
+
+Add components:
+
+```bash
+npx shadcn@latest add button
+npx shadcn@latest add dialog
+```
+
+If the init command prompts for paths, use values matching this repo:
+- CSS file: `src/index.css`
+- Components alias: `@/components`
+- Utils alias: `@/lib/utils`
+
+## 4) Common local issue: CORS
+
+If frontend (`5173`) calls backend (`5000`) directly, backend must return CORS headers.
+
+This repo uses backend-side CORS config in `src/main/java/com/example/demo/config/WebCorsConfig.java` for:
+- `http://localhost:5173`
+- `http://127.0.0.1:5173`
+
+If you change frontend port or domain, update that file.
+
+## Build guide (how to produce release artifacts)
+
+## Backend artifact
+
+From repo root:
+
+```bash
+./mvnw clean package
+```
+
+Expected artifact:
+- `target/demo-0.0.1-SNAPSHOT.jar`
+
+Run packaged JAR locally:
+
+```bash
+java -jar target/demo-0.0.1-SNAPSHOT.jar
+```
+
+## Frontend artifact
+
+From `web/web`:
+
+```bash
+npm run build
+```
+
+Expected output:
+- `web/web/dist`
+
+## AWS deployment guide (detailed)
+
+Below is a practical Elastic Beanstalk deployment path for the backend service.
+
+## A. Create/verify DynamoDB resources
+
+1. Choose one AWS region (example: `us-east-1`) and use it consistently.
+2. Create `InventoryItems` table:
+- Partition key: `itemId` (String)
+- Capacity mode: On-demand
+- Point-in-time recovery: Enabled
+- Encryption: AWS owned key (or KMS if required by policy)
+3. Create `OrderItems` table:
+- Partition key: `customerId` (String)
+- Sort key: `orderTime` (String)
+- Capacity mode: On-demand
+- Point-in-time recovery: Enabled
+- Encryption: AWS owned key (or KMS)
+4. Add GSI `orderIdIndex`:
+- Partition key: `orderId` (String)
+- Projection: `ALL` (or minimal fields if you optimize later)
+5. Optional but recommended:
+- CloudWatch alarms for throttled requests and system errors
+- Backup policy and retention checks
+
+## B. IAM roles and policies
+
+You need two different IAM roles in Elastic Beanstalk deployments.
+
+1. Elastic Beanstalk service role (environment management)
+- Purpose: lets Elastic Beanstalk manage infrastructure resources.
+- Typical managed policy: `AWSElasticBeanstalkEnhancedHealth` plus platform-required service policies.
+
+2. EC2 instance profile role (application runtime permissions)
+- Purpose: lets your Spring Boot app call DynamoDB from EC2 instances.
+- Trust relationship: `ec2.amazonaws.com`
+- Attach this role to the Elastic Beanstalk environment as instance profile.
+
+Minimum application policy example (replace region/account):
+
 ```json
 {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "dynamodb:GetItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:Query",
-                "dynamodb:Scan"
-            ],
-            "Resource": [
-                "arn:aws:dynamodb:us-east-1:YOUR_ACCOUNT_ID:table/InventoryItems",
-                "arn:aws:dynamodb:us-east-1:YOUR_ACCOUNT_ID:table/OrderItems",
-                "arn:aws:dynamodb:us-east-1:YOUR_ACCOUNT_ID:table/OrderItems/index/orderIdIndex"
-            ]
-        }
-    ]
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:Query",
+        "dynamodb:Scan"
+      ],
+      "Resource": [
+        "arn:aws:dynamodb:us-east-1:123456789012:table/InventoryItems",
+        "arn:aws:dynamodb:us-east-1:123456789012:table/OrderItems",
+        "arn:aws:dynamodb:us-east-1:123456789012:table/OrderItems/index/orderIdIndex"
+      ]
+    }
+  ]
 }
 ```
 
-## ⚖️ Trade-offs & Design Decisions
+Validation checklist:
+- EC2 instances in EB environment show expected IAM role
+- `aws sts get-caller-identity` from instance returns expected principal
+- App logs show no `AccessDeniedException`
 
-### DynamoDB vs. PostgreSQL
-*   **Why DynamoDB?**: Chosen for its predictable performance at any scale. While complex queries (joins) are harder, the primary need for fast Key-Value lookups and atomic counter updates (for stock) fits DynamoDB perfectly.
-*   **Schema Design**: No joins means data is sometimes duplicated or fetched in parallel request, but ensures O(1) fetch time.
+## C. Package and deploy backend to Elastic Beanstalk
 
-### Consistency Models
-*   **Strong Consistency**: Used for **stock adjustments** to absolutely prevent overselling.
-*   **Eventual Consistency**: Acceptable for **listing historical orders** or product descriptions, allowing for higher read throughput and lower costs.
+1. Build jar:
 
-## 💻 How to Run Locally
+```bash
+./mvnw clean package
+```
 
-### Prerequisites
-*   Java 17+
-*   Node.js 18+
-*   AWS Credentials configured (for DynamoDB access)
+2. Create EB application/environment:
+- Platform: Java 17 (Amazon Linux 2023 branch)
+- Environment type: single instance (dev) or load balanced (prod)
+- Upload `target/demo-0.0.1-SNAPSHOT.jar`
 
-### Backend (Spring Boot)
-1.  Navigate to root directory.
-2.  Ensure your AWS credentials are set (e.g., `~/.aws/credentials`).
-3.  Run the application:
-    ```bash
-    ./mvnw spring-boot:run
-    ```
-    *   Server starts on `http://localhost:5000`.
+3. Configure environment variables in EB:
+- `PORT=5000`
+- `AWS_REGION=us-east-1`
+- Optional custom table names if you externalize them later
 
-### Frontend (React)
-1.  Navigate to `frontend` directory:
-    ```bash
-    cd frontend
-    ```
-2.  Install dependencies:
-    ```bash
-    npm install
-    ```
-3.  Start the development server:
-    ```bash
-    npm run dev
-    ```
-    *   Access the UI at `http://localhost:5173` (or port shown in terminal).
+4. Attach IAM instance profile role from section B.
 
-## ☁️ Deployment (AWS Elastic Beanstalk)
+5. Health check and startup:
+- Root endpoint: `GET /` should return `Greetings from Spring Boot!`
+- Confirm environment health is Green
 
-1.  **Build JAR**: 
-    ```bash
-    ./mvnw clean package
-    ```
-    This creates `target/demo-0.0.1-SNAPSHOT.jar`.
-    
-2.  **Create Application**:
-    *   Go to **Elastic Beanstalk Console** > **Create Application**.
-    *   **Platform**: Java (likely Java 17 running on Corretto).
-    *   **Platform Branch**: Java 17 running on 64bit Amazon Linux 2023.
+## D. Network and security settings
 
-3.  **Upload Artifact**: 
-    *   Select "Upload your code".
-    *   Upload the local `.jar` file from `target/`.
+- Security group outbound must allow access to DynamoDB public endpoint (or use VPC endpoint if your policy requires private traffic).
+- If using private subnets, ensure NAT or DynamoDB VPC endpoint is configured.
+- Restrict inbound ports to LB/required clients only.
 
-4.  **Configure Environment**:
-    *   **Instance Profile**: Attach the IAM Role created in the *IAM & Security* section to your environment's EC2 instances. **Crucial**: Without this, the app cannot talk to DynamoDB.
-    *   **Environment Properties**:
-        *   `SERVER_PORT`: `5000` (Default Spring Boot port is 8080, but this app listens on 5000).
-        *   `AWS_REGION`: `us-east-1` (or your target region).
+## E. Post-deploy verification
 
-5.  **Launch**: Click Create and wait for the health check to pass.
+1. Verify environment status and logs in EB console.
+2. Test backend endpoints from Postman/curl.
+3. If frontend is hosted on another domain, update backend CORS allowed origins.
+4. Monitor CloudWatch logs for latency spikes and throttling.
+
+## API quick reference
+
+Basic Postman testing:
+1. Open Postman and create a new HTTP request.
+2. Set method + URL using backend base URL: `http://localhost:5000`.
+3. For `POST` requests, set `Body -> raw -> JSON` and `Content-Type: application/json`.
+4. Send request and verify status code and response payload.
+5. Save each request into a collection (for example: `Inventory API Local`) for reuse.
+
+Data setup tip:
+- You can directly create/edit records in the DynamoDB Console (`InventoryItems`, `OrderItems`).
+- A practical test flow is: add one item in DynamoDB Console first, then call `GET /api/items/get` and `GET /api/items/all` from Postman to verify backend reads.
+
+Example URLs in Postman:
+- `GET http://localhost:5000/api/items/all`
+- `GET http://localhost:5000/api/items/get?id=ITEM_001`
+- `DELETE http://localhost:5000/api/items/delete?id=ITEM_001`
+- `POST http://localhost:5000/api/orders/add`
+
+Inventory:
+- `POST /api/items/post`
+- `GET /api/items/get?id={itemId}`
+- `GET /api/items/all`
+- `DELETE /api/items/delete?id={itemId}`
+
+Orders:
+- `POST /api/orders/add`
+- `DELETE /api/orders/delete?customerId={id}&orderTime={isoTime}`
+
+## Build philosophy for this repo
+
+This README is intentionally both:
+- How to use: run locally, call APIs, debug common issues
+- How to build: understand data model decisions, extend features (pagination/filtering), and deploy safely to AWS
+
+If you are continuing development, start with TODO items for pagination and filtering because they affect API contract, DynamoDB access patterns, and frontend list screens.
