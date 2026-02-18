@@ -15,7 +15,7 @@ export const inventoryApi = {
         return response.data;
     },
     updateItem: async (item: InventoryItem): Promise<InventoryItem> => {
-        const response = await api.post<InventoryItem>('/items/post', item);
+        const response = await api.patch<InventoryItem>('/items/patch', item);
         return response.data;
     },
     deleteItem: async (id: string): Promise<void> => {

@@ -13,6 +13,7 @@ public class InventoryItem {
     private String category;
     private int threshold;
     private boolean isAvailable;
+    private String currency;
 
     @DynamoDbPartitionKey
     public String getItemId() {
@@ -43,8 +44,12 @@ public class InventoryItem {
         return threshold;
     }
 
-    public boolean isAvailable() {
+    public boolean getIsAvailable() {
         return isAvailable;
+    }
+
+    public String getCurrency() {
+        return currency;
     }
 
     public void setItemId(String itemId) {
@@ -78,4 +83,9 @@ public class InventoryItem {
     public void setAvailable(boolean available) {
         isAvailable = available;
     }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
 }

@@ -6,5 +6,6 @@ export interface InventoryItem {
     stockLevel: number;
     category: string;
     threshold: number;
-    available: boolean;
+    isAvailable: boolean;
+    currency: string;
 }

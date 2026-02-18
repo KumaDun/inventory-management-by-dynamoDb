@@ -29,8 +29,9 @@ import {inventoryApi} from "@/api/inventoryApi.ts";
 import axios from "axios";
 
 export function InventoryPop() {
-    const {register, handleSubmit, reset, formState: {errors}} = useForm<InventoryItem>()
+    const {register, handleSubmit, reset, formState: {errors}, setValue, watch} = useForm<InventoryItem>()
     const [currency, setCurrency] = useState("USD")
+    const [categoryValue, setCategoryValue] = useState("")
     // TODO add currency and availability dropdown menu
 
     const categories = [
@@ -48,7 +49,6 @@ export function InventoryPop() {
                 <Button type="button">Add New Item</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-sm">
-
                 <DialogHeader>
                     <DialogTitle>Edit new Inventory</DialogTitle>
                     <DialogDescription>
@@ -96,21 +96,36 @@ export function InventoryPop() {
                         </Field>
                         <Field>
                             <Label >Category</Label>
+                            <Select
+                                value={categoryValue}
+                                onValueChange={(value) => {
+                                    setCategoryValue(value)
+                                    setValue("category", value, {shouldValidate: true})
+                                }}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectLabel>Category</SelectLabel>
+                                        {categories.map((category) => (
+                                            <SelectItem key={category} value={category}>
+                                                {category}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
                             <Input
-                                {...register("category",{
-                                    required:'Category is required',
+                                {...register("category", {
+                                    required: "Category is required",
                                 })}
-                                id="category"
-                                type="text"
-                                list="cate"
-                                placeholder="Electronics"
+                                type="hidden"
+                                value={watch("category") ?? ""}
+                                readOnly
                                 required
                             />
-                            <datalist id="cate">
-                                {categories.map((category) => (
-                                    <option key={category} value={category} />
-                                ))}
-                            </datalist>
                             {errors.category && (
                                 <p className="mt-1 text-sm text-red-500">
                                     {String(errors.category.message)}
@@ -198,8 +213,8 @@ export function InventoryPop() {
                             <div className = "flex items-center gap-2">
                                 <Label>Availability</Label>
                                 <Input className = "w-4 h-4"
-                                    {...register("available")}
-                                    id="available"
+                                    {...register("isAvailable")}
+                                    id="isAvailable"
                                     type="checkbox"
                                     placeholder="true"
                                 />
@@ -210,21 +225,25 @@ export function InventoryPop() {
                         </div>
                 </ScrollArea>
                 <DialogFooter>
-                    <Button onClick = {() => reset(undefined, { keepValues: false })} variant="outline">
+                    <Button onClick = {() => {
+                        reset(undefined, { keepValues: false })
+                        setCategoryValue("")
+                        setValue("category", "", {shouldValidate: true})
+                    }} variant="outline">
                         Clear
                     </Button>
                     <DialogClose asChild>
                         <Button
                             type="submit"
                             onClick = {handleSubmit((data: InventoryItem) => {
-                                console.log("submit inventoryItem", {...data, currency})
+                                console.log("submit inventoryItem for creating", {...data, currency})
                                 const payload = {
                                     ...data,
                                     threshold:
                                         data.threshold == null || Number.isNaN(data.threshold)
                                             ? 0
                                             : data.threshold,
-                                    isAvailable: (data.available == null || undefined) ? false : data.available,
+                                    isAvailable: (data.isAvailable == null || undefined) ? false : data.isAvailable,
                                 }
                                 inventoryApi.createItem(payload).then((responseData) => {
                                     try {
@@ -236,6 +255,8 @@ export function InventoryPop() {
                                     }
                                 })
                                 reset(undefined, { keepValues: false })
+                                setCategoryValue("")
+                                setValue("category", "", {shouldValidate: true})
                                 setCurrency("USD")
                             })}>
                             Submit

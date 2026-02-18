@@ -1,31 +1,19 @@
-import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 import {Header} from '@/components/ui/header.tsx'
-import { InventoryItemCard} from "@/components/component/inventoryItemCard.tsx";
-import { InventoryTable } from "@/components/component/inventoryTable.tsx";
+import { InventoryTable } from "@/components/component/InventoryTable.tsx";
 import {Card, CardContent, CardFooter, CardHeader, CardTitle} from "@/components/ui/card.tsx";
-import {InventoryPop} from "@/components/component/inventoryPop.tsx";
+import {InventoryPop} from "@/components/component/InventoryPop.tsx";
 
 
 function App() {
-    const [isAddingItem, setIsAddingItem] = useState<boolean>(false);
-
-
     return (
     <>
         <div>
             <Header>
             </Header>
         </div>
-        {isAddingItem &&
-            <div className = "w-96 mx-auto">
-                <InventoryItemCard
-                    onClose = {() => setIsAddingItem(false)}
-                ></InventoryItemCard>
-            </div>
-        }
 
         <div className="h-10"></div>
 

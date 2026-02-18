@@ -38,6 +38,12 @@ public class InventoryController {
         return ResponseEntity.ok(inventoryService.getInventoryItems());
     }
 
+    @PatchMapping("/patch")
+    public ResponseEntity<InventoryItem> updateInventoryItem(@RequestBody InventoryItem item) {
+        Optional<InventoryItem> updated = inventoryService.updateInventoryItem(item.getItemId(), item);
+        return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
+
     @DeleteMapping("/delete")
     public ResponseEntity<Void> deleteInventoryItem(
             @RequestParam(required = false) String id,

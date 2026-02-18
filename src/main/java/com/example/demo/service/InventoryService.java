@@ -68,6 +68,10 @@ public class InventoryService {
         }
     }
 
+    public Optional<InventoryItem> updateInventoryItem(String itemId, InventoryItem item) {
+        return itemsRepository.updateAttributeByItemId(item.getItemId(), item);
+    }
+
     public void updateStockLevelByItemId(String itemId, int stockLevel) {
         itemsRepository.updateItemStockLevelByItemId(itemId, stockLevel);
     }

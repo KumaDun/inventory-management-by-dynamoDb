@@ -103,7 +103,15 @@ public class ItemsRepository {
         }
     }
 
-    private void updateAttributeByItemId(String itemId, Consumer<InventoryItem> setter) {
+    public Optional<InventoryItem> updateAttributeByItemId(String itemId, InventoryItem item) {
+        itemsTable.updateItem(UpdateItemEnhancedRequest.builder(InventoryItem.class)
+                .item(item)
+                .ignoreNulls(true)
+                .build());
+        return Optional.ofNullable(item);
+    }
+
+    public void updateAttributeByItemId(String itemId, Consumer<InventoryItem> setter) {
         InventoryItem inventoryItem = new InventoryItem();
         inventoryItem.setItemId(itemId);
         setter.accept(inventoryItem);
