@@ -123,10 +123,10 @@ export function InventoryTable() {
                     ))}
                 </TableBody>
                 <TableFooter>
-                    <TableRow>
-                        <TableCell className="text-left" colSpan={8}>Total</TableCell>
-                        <TableCell className="text-left">$2,500.00</TableCell>
-                    </TableRow>
+                {/*    <TableRow>*/}
+                {/*        <TableCell className="text-left" colSpan={8}>Total</TableCell>*/}
+                {/*        <TableCell className="text-left">$2,500.00</TableCell>*/}
+                {/*    </TableRow>*/}
                 </TableFooter>
             </Table>
             <UpdatePop
