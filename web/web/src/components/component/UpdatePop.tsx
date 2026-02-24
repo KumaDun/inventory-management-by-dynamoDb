@@ -35,16 +35,19 @@ export function UpdatePop({isOpen, onIsOpenChange, onRefreshTrigger, item}:
                               onRefreshTrigger: () => void,
                               item: InventoryItem | null
                           }) {
-    const {register, handleSubmit, reset, formState: {errors}, setValue, watch} = useForm<InventoryItem>()
+    const {register, handleSubmit, reset, formState: {errors}, setValue} = useForm<InventoryItem>()
     const [currency, setCurrency] = useState("USD")
     const [categoryValue, setCategoryValue] = useState("")
     const [isWorking, setIsWorking] = useState(false)
 
     useEffect(() => {
+        if (!isOpen) return
+
         if (item) {
             reset(item)
+            setCategoryValue(item?.category ?? "")
         }
-    }, [item])
+    }, [isOpen, item, reset])
     // TODO add currency and availability dropdown menu
 
     const categories = [
@@ -55,6 +58,11 @@ export function UpdatePop({isOpen, onIsOpenChange, onRefreshTrigger, item}:
         "Sports"
     ]
     const currencies = ["USD", "EUR", "JPY", "GBP", "CNY"]
+
+    const clearForm = () => {
+        reset()
+        setCategoryValue(item?.category ?? "")
+    }
 
     return <Dialog open={isOpen} onOpenChange={onIsOpenChange}>
         <form>
@@ -133,8 +141,6 @@ export function UpdatePop({isOpen, onIsOpenChange, onRefreshTrigger, item}:
                                                 required: "Category is required",
                                             })}
                                             type="hidden"
-                                            value={watch("category") ?? ""}
-                                            readOnly
                                             required
                                         />
                                         {errors.category && (
@@ -233,7 +239,7 @@ export function UpdatePop({isOpen, onIsOpenChange, onRefreshTrigger, item}:
                             </div>
                         </ScrollArea>
                         <DialogFooter>
-                            <Button onClick={() => reset(undefined, {keepValues: false})} variant="outline">
+                            <Button type="button" onClick={clearForm} variant="outline">
                                 Clear
                             </Button>
                             <DialogClose asChild>
@@ -263,8 +269,7 @@ export function UpdatePop({isOpen, onIsOpenChange, onRefreshTrigger, item}:
                                                 onIsOpenChange(false)
                                             }
                                         })
-                                        reset(undefined, {keepValues: false})
-                                        setCurrency("USD")
+                                        clearForm()
                                     })}>
                                     Submit
                                 </Button>

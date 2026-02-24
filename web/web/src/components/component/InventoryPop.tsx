@@ -1,6 +1,5 @@
 import {
     Dialog,
-    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
@@ -29,9 +28,24 @@ import {inventoryApi} from "@/api/inventoryApi.ts";
 import axios from "axios";
 
 export function InventoryPop() {
-    const {register, handleSubmit, reset, formState: {errors}, setValue, watch} = useForm<InventoryItem>()
+    const defaultFormValues: InventoryItem = {
+        itemId: "placeholderId",
+        name: "",
+        description: "",
+        category: "",
+        price: 0,
+        stockLevel: 0,
+        threshold: 0,
+        isAvailable: false,
+        currency: "USED",
+    }
+
+    const {register, handleSubmit, reset, formState: {errors}, setValue} = useForm<InventoryItem>({
+        defaultValues: defaultFormValues,
+    })
     const [currency, setCurrency] = useState("USD")
     const [categoryValue, setCategoryValue] = useState("")
+    const [open, setOpen] = useState(false)
     // TODO add currency and availability dropdown menu
 
     const categories = [
@@ -43,7 +57,36 @@ export function InventoryPop() {
     ]
     const currencies = ["USD", "EUR", "JPY", "GBP", "CNY"]
 
-    return <Dialog>
+    const clearForm = () => {
+        reset(defaultFormValues)
+        setCategoryValue("")
+        setCurrency("USD")
+    }
+
+    const onSubmit = async (data: InventoryItem) => {
+        console.log("submit inventoryItem for creating", {...data, currency})
+        const payload = {
+            ...data,
+            threshold:
+                data.threshold == null || Number.isNaN(data.threshold)
+                    ? 0
+                    : data.threshold,
+            isAvailable: (data.isAvailable == null || undefined) ? false : data.isAvailable,
+        }
+
+        try {
+            const responseData = await inventoryApi.createItem(payload)
+            console.log(responseData)
+            clearForm()
+            setOpen(false)
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.status === 404) {
+                console.log(`createItem error ${error?.code}, ${error?.message}`)
+            }
+        }
+    }
+
+    return <Dialog open={open} onOpenChange={setOpen}>
         <form>
             <DialogTrigger asChild>
                 <Button type="button">Add New Item</Button>
@@ -122,8 +165,6 @@ export function InventoryPop() {
                                     required: "Category is required",
                                 })}
                                 type="hidden"
-                                value={watch("category") ?? ""}
-                                readOnly
                                 required
                             />
                             {errors.category && (
@@ -225,43 +266,12 @@ export function InventoryPop() {
                         </div>
                 </ScrollArea>
                 <DialogFooter>
-                    <Button onClick = {() => {
-                        reset(undefined, { keepValues: false })
-                        setCategoryValue("")
-                        setValue("category", "", {shouldValidate: true})
-                    }} variant="outline">
+                    <Button type="button" onClick={clearForm} variant="outline">
                         Clear
                     </Button>
-                    <DialogClose asChild>
-                        <Button
-                            type="submit"
-                            onClick = {handleSubmit((data: InventoryItem) => {
-                                console.log("submit inventoryItem for creating", {...data, currency})
-                                const payload = {
-                                    ...data,
-                                    threshold:
-                                        data.threshold == null || Number.isNaN(data.threshold)
-                                            ? 0
-                                            : data.threshold,
-                                    isAvailable: (data.isAvailable == null || undefined) ? false : data.isAvailable,
-                                }
-                                inventoryApi.createItem(payload).then((responseData) => {
-                                    try {
-                                        console.log(responseData)
-                                    } catch (error) {
-                                        if (axios.isAxiosError(error) && error.response?.status === 404) {
-                                            console.log(`createItem error ${error?.code}, ${error?.message}`)
-                                        }
-                                    }
-                                })
-                                reset(undefined, { keepValues: false })
-                                setCategoryValue("")
-                                setValue("category", "", {shouldValidate: true})
-                                setCurrency("USD")
-                            })}>
-                            Submit
-                        </Button>
-                    </DialogClose>
+                    <Button type="button" onClick={handleSubmit(onSubmit)}>
+                        Submit
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </form>
