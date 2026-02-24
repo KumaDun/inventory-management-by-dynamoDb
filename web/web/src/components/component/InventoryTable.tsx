@@ -16,34 +16,38 @@ import {SquarePen, Trash2} from 'lucide-react';
 import type {InventoryItem} from "@/types/InventoryItem.ts";
 import {UpdatePop} from "@/components/component/UpdatePop.tsx";
 import axios from "axios";
+import type {ScanItemsPage} from "@/types/ScanItemsPage.ts";
+import {Button} from "@/components/ui/button.tsx";
 
 export function InventoryTable() {
     const [refreshTrigger, setRefreshTrigger] = useState<boolean>(false)
     const [isLoading, setIsLoading] = useState(false)
     const [isUpdating, setIsUpdating] = useState<boolean>(false)
-    const [items, setItems] = useState([{
-        itemId: "INV001",
-        name: "iPhone 17 Air",
-        description: "iPhone 17 Air",
-        price: 1200,
-        stockLevel: 200,
-        category: "Electronics",
-        threshold: 20,
-        isAvailable: true,
-        currency: "USD",
-    },])
+    const [items, setItems] = useState<InventoryItem[]>([])
+    const [lastEvaluatedKey, setlastEvaluatedKey] = useState<string | null>(null)
+    const [hasMore, setHasMore] = useState(true)
     const [item, setItem] = useState<InventoryItem | null>(null)
+
     useEffect(() => {
-        loadItems();
+        void loadItems(true)
     }, [refreshTrigger])
 
-    const loadItems = async () => {
+    const loadItems = async (replace: boolean) => {
+        if (!replace && !hasMore) return
         try {
             setIsLoading(true)
-            const data: InventoryItem[] = await inventoryApi.getAllItems()
-            // TODO Think about pagination and partial update
-            console.log(data)
-            setItems(data)
+            const cursor = replace ? null : lastEvaluatedKey
+            console.log('cursor sent', cursor)
+            const data: ScanItemsPage = await inventoryApi.getAllItemsPage(cursor)
+            setlastEvaluatedKey(data.lastEvaluatedKey)
+            setHasMore(data.lastEvaluatedKey != null)
+            console.log('lastEvaluatedKey', data.lastEvaluatedKey)
+            if (replace) {
+                setItems(data.items)
+                return
+            }
+            // TODO replacing items causes rendering cost, optimization needed, use React.memo or Virtualization
+            setItems((prev) => replace ? data.items : [...prev, ...data.items]);
         } catch (error) {
             console.log(error)
         } finally {
@@ -123,10 +127,18 @@ export function InventoryTable() {
                     ))}
                 </TableBody>
                 <TableFooter>
-                {/*    <TableRow>*/}
-                {/*        <TableCell className="text-left" colSpan={8}>Total</TableCell>*/}
-                {/*        <TableCell className="text-left">$2,500.00</TableCell>*/}
-                {/*    </TableRow>*/}
+                    <TableRow>
+                        <TableCell className="text-left" colSpan={9}>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={isLoading || !hasMore}
+                                onClick={() => void loadItems(false)}
+                            >
+                                {hasMore ? "Load more" : "No more items"}
+                            </Button>
+                        </TableCell>
+                    </TableRow>
                 </TableFooter>
             </Table>
             <UpdatePop

@@ -1,9 +1,11 @@
 import {api} from '@/api/axiosConfig.ts';
 import type {InventoryItem} from '@/types/InventoryItem.ts';
+import type {ScanItemsPage} from '@/types/ScanItemsPage.ts';
+
 
 export const inventoryApi = {
-    getAllItems: async (): Promise<InventoryItem[]> => {
-        const response = await api.get<InventoryItem[]>('/items/all');
+    getAllItemsPage: async (lastEvaluatedKey: string | null): Promise<ScanItemsPage> => {
+        const response = await api.post<ScanItemsPage>('/items/all', lastEvaluatedKey ?? null);
         return response.data;
     },
     getItem: async (id: string): Promise<InventoryItem> => {

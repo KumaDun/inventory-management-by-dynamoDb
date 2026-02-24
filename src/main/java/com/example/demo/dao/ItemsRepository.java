@@ -4,17 +4,22 @@ import com.example.demo.exceptions.daoExceptions.DaoConflictException;
 import com.example.demo.exceptions.daoExceptions.DaoPersistenceException;
 import com.example.demo.model.InventoryItem;
 
+import com.example.demo.model.ScanItemsPage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
+import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
 import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -145,11 +150,30 @@ public class ItemsRepository {
         this.updateAttributeByItemId(itemId, item -> item.setAvailable(available));
     }
 
-    public List<InventoryItem> scanItems() {
+
+    public ScanItemsPage scanItems(String exclusiveStartKey) {
+        System.out.println(String.format("scanItems exclusiveStartKey %s", exclusiveStartKey));
         try {
-            List<InventoryItem> result = new ArrayList<>();
-            itemsTable.scan(ScanEnhancedRequest.builder().consistentRead(true).build()).items().forEach(result::add);
-            return result;
+            ScanEnhancedRequest.Builder scanBuilder = ScanEnhancedRequest.builder()
+                    .consistentRead(true)
+                    .limit(10);
+            if (exclusiveStartKey != null && !exclusiveStartKey.isEmpty()) {
+                scanBuilder.exclusiveStartKey(
+                        Map.of("itemId", AttributeValue.builder().s(exclusiveStartKey).build())
+                );
+            }
+
+            PageIterable<InventoryItem> pages = itemsTable.scan(scanBuilder.build());
+            java.util.Iterator<Page<InventoryItem>> iterator = pages.iterator();
+            if (!iterator.hasNext()) {
+                return new ScanItemsPage(List.of(), null);
+            }
+            Page<InventoryItem> page = iterator.next();
+//            System.out.println("Repository scanItems get exclusiveStartKey" + page.lastEvaluatedKey().toString());
+//            System.out.println("Repository scanItems get exclusiveStartKey" + page.lastEvaluatedKey().get("itemId").s());
+            return new ScanItemsPage(
+                    new ArrayList<>(page.items()), ""
+            );
         } catch (DynamoDbException ex) {
             throw new DaoPersistenceException(
                     "DynamoDB scan operation failed",

@@ -1,25 +1,29 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.InventoryItem;
+import com.example.demo.model.ScanItemsPage;
 import com.example.demo.service.InventoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("api/items")
-@CrossOrigin(origins = {
-        "https://inventory-management-system-kumadun.vercel.app/"
-},
-        methods = {
-                RequestMethod.GET,
-                RequestMethod.POST,
-                RequestMethod.PATCH,
-                RequestMethod.DELETE
-        })
+//@CrossOrigin(origins = {
+//        "https://inventory-management-system-8bit.vercel.app/"
+//},
+//        methods = {
+//                RequestMethod.GET,
+//                RequestMethod.POST,
+//                RequestMethod.PATCH,
+//                RequestMethod.DELETE
+//        })
+@CrossOrigin(origins = "*")
 public class InventoryController {
     private final InventoryService inventoryService;
 
@@ -40,10 +44,11 @@ public class InventoryController {
         return item.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<Iterable<InventoryItem>> getAllInventoryItems() {
+    @PostMapping("/all")
+    public ResponseEntity<ScanItemsPage> getAllInventoryItems(
+            @RequestBody(required = false) String exclusiveStartKey) {
         System.out.println("InventoryController /all");
-        return ResponseEntity.ok(inventoryService.getInventoryItems());
+        return ResponseEntity.ok(inventoryService.getInventoryItems(exclusiveStartKey));
     }
 
     @PatchMapping("/patch")

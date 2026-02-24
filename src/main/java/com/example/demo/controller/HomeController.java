@@ -6,12 +6,13 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@CrossOrigin(origins = {
-        "https://inventory-management-system-kumadun.vercel.app/"
-},
-        methods = {
-                RequestMethod.GET
-        })
+//@CrossOrigin(origins = {
+//        "inventory-management-system-8bit.vercel.app/"
+//},
+//        methods = {
+//                RequestMethod.GET
+//        })
+@CrossOrigin(origins = "*")
 public class HomeController {
 
     @GetMapping("/")

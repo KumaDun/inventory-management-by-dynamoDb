@@ -6,9 +6,13 @@ import com.example.demo.exceptions.daoExceptions.DaoPersistenceException;
 import com.example.demo.exceptions.serviceExceptions.OperationFailedException;
 import com.example.demo.exceptions.serviceExceptions.ItemConflictException;
 import com.example.demo.model.InventoryItem;
+import com.example.demo.model.ScanItemsPage;
+import jakarta.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -96,7 +100,7 @@ public class InventoryService {
         itemsRepository.updateAvailableByItemId(itemId, available);
     }
 
-    public java.util.List<InventoryItem> getInventoryItems() {
-        return itemsRepository.scanItems();
+    public ScanItemsPage getInventoryItems(@Nullable String exclusiveStartKey) {
+        return itemsRepository.scanItems(exclusiveStartKey);
     }
 }
