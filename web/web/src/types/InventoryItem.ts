@@ -8,4 +8,5 @@ export interface InventoryItem {
     threshold: number;
     isAvailable: boolean;
     currency: string;
+    shardKey: string;
 }

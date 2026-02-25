@@ -14,6 +14,7 @@ public class InventoryItem {
     private int threshold;
     private boolean isAvailable;
     private String currency;
+    private String shardKey;
 
     @DynamoDbPartitionKey
     public String getItemId() {
@@ -88,4 +89,11 @@ public class InventoryItem {
         this.currency = currency;
     }
 
+    public String getShardKey() {
+        return shardKey;
+    }
+
+    public void setShardKey(String shardKey) {
+        this.shardKey = shardKey;
+    }
 }

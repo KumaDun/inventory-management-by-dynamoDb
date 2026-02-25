@@ -36,6 +36,60 @@ public class ItemsRepository {
         this.itemsTable = enhancedClient.table(tableName, TableSchema.fromBean(InventoryItem.class));
     }
 
+    private String computeShardKey(String itemId) {
+        if (itemId == null || itemId.isBlank()) {
+            return "PK1";
+        }
+        char last = itemId.charAt(itemId.length() - 1);
+        int v = Character.digit(last, 16);
+        if (v < 0) {
+            v = -v;
+        }
+        return (v % 2 == 0) ? "PK2" : "PK1";
+    }
+
+    public int backfillMissingShardKeys(int pageSize) {
+        int pageLimit = pageSize > 0 ? pageSize : 100;
+        int updatedCount = 0;
+        Expression missingShardKeyCondition = Expression.builder()
+                .expression("attribute_not_exists(#shardKey)")
+                .expressionNames(Map.of("#shardKey", "shardKey"))
+                .build();
+
+        ScanEnhancedRequest request = ScanEnhancedRequest.builder()
+                .consistentRead(true)
+                .limit(pageLimit)
+                .build();
+
+        PageIterable<InventoryItem> pages = itemsTable.scan(request);
+        for (Page<InventoryItem> page : pages) {
+            for (InventoryItem item : page.items()) {
+                if (item.getItemId() == null || item.getItemId().isBlank()) {
+                    continue;
+                }
+                if (item.getShardKey() != null && !item.getShardKey().isBlank()) {
+                    continue;
+                }
+
+                InventoryItem patch = new InventoryItem();
+                patch.setItemId(item.getItemId());
+                patch.setShardKey(computeShardKey(item.getItemId()));
+
+                try {
+                    itemsTable.updateItem(UpdateItemEnhancedRequest.builder(InventoryItem.class)
+                            .item(patch)
+                            .ignoreNulls(true)
+                            .conditionExpression(missingShardKeyCondition)
+                            .build());
+                    updatedCount++;
+                } catch (ConditionalCheckFailedException ignored) {
+                    // Another writer already set shardKey; safe to skip.
+                }
+            }
+        }
+        return updatedCount;
+    }
+
     public Optional<InventoryItem> putItem(InventoryItem inventoryItem) {
         try {
             if (inventoryItem.getItemId() == null || inventoryItem.getItemId().isBlank()) {
@@ -44,8 +98,10 @@ public class ItemsRepository {
             // 2) Condition: don't overwrite if itemId already exists
             Expression notExists = Expression.builder()
                     .expression("attribute_not_exists(#pk)")
-                    .expressionNames(java.util.Map.of("#pk", "itemId"))
+                    .expressionNames(Map.of("#pk", "itemId"))
                     .build();
+            String shardKey = this.computeShardKey(inventoryItem.getItemId());
+            inventoryItem.setShardKey(shardKey);
             PutItemEnhancedRequest<InventoryItem> request =
                     PutItemEnhancedRequest.builder(InventoryItem.class)
                             .item(inventoryItem)
