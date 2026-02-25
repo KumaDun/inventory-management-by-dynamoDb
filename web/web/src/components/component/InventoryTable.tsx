@@ -38,7 +38,12 @@ export function InventoryTable() {
             setIsLoading(true)
             const cursor = replace ? null : lastEvaluatedKey
             console.log('cursor sent', cursor)
-            const data: ScanItemsPage = await inventoryApi.getAllItemsPage(cursor)
+            let data: ScanItemsPage
+            if (!cursor) {
+                data = await inventoryApi.getAllItemsPageWithoutEvaluatedKey()
+            } else {
+                data = await inventoryApi.getAllItemsPage(cursor)
+            }
             setlastEvaluatedKey(data.lastEvaluatedKey)
             setHasMore(data.lastEvaluatedKey != null)
             console.log('lastEvaluatedKey', data.lastEvaluatedKey)
@@ -128,7 +133,7 @@ export function InventoryTable() {
                 </TableBody>
                 <TableFooter>
                     <TableRow>
-                        <TableCell className="text-left" colSpan={9}>
+                        <TableCell className="text-align" colSpan={9}>
                             <Button
                                 type="button"
                                 variant="outline"

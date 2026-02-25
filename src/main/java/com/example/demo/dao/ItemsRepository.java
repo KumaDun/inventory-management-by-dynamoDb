@@ -150,29 +150,37 @@ public class ItemsRepository {
         this.updateAttributeByItemId(itemId, item -> item.setAvailable(available));
     }
 
-
     public ScanItemsPage scanItems(String exclusiveStartKey) {
-        System.out.println(String.format("scanItems exclusiveStartKey %s", exclusiveStartKey));
         try {
+            String normalizedStartKey = exclusiveStartKey == null ? null : exclusiveStartKey.trim();
+            if (normalizedStartKey != null &&
+                    (normalizedStartKey.isEmpty() || "null".equalsIgnoreCase(normalizedStartKey))) {
+                normalizedStartKey = null;
+            }
             ScanEnhancedRequest.Builder scanBuilder = ScanEnhancedRequest.builder()
                     .consistentRead(true)
                     .limit(10);
-            if (exclusiveStartKey != null && !exclusiveStartKey.isEmpty()) {
+            if (normalizedStartKey != null) {
+                System.out.println("build exclusiveStartKey");
                 scanBuilder.exclusiveStartKey(
-                        Map.of("itemId", AttributeValue.builder().s(exclusiveStartKey).build())
+                        Map.of("itemId", AttributeValue.builder().s(normalizedStartKey).build())
                 );
             }
-
             PageIterable<InventoryItem> pages = itemsTable.scan(scanBuilder.build());
             java.util.Iterator<Page<InventoryItem>> iterator = pages.iterator();
             if (!iterator.hasNext()) {
+                System.out.println("iterator hasNoNext");
                 return new ScanItemsPage(List.of(), null);
             }
             Page<InventoryItem> page = iterator.next();
-//            System.out.println("Repository scanItems get exclusiveStartKey" + page.lastEvaluatedKey().toString());
-//            System.out.println("Repository scanItems get exclusiveStartKey" + page.lastEvaluatedKey().get("itemId").s());
+            System.out.println("page items length " + page.items().size());
+            Map<String, AttributeValue> lastEvaluatedKeyMap = page.lastEvaluatedKey();
+            String lastEvaluatedKey = null;
+            if (lastEvaluatedKeyMap != null && lastEvaluatedKeyMap.containsKey("itemId")) {
+                lastEvaluatedKey = lastEvaluatedKeyMap.get("itemId").s();
+            }
             return new ScanItemsPage(
-                    new ArrayList<>(page.items()), ""
+                    new ArrayList<>(page.items()), lastEvaluatedKey
             );
         } catch (DynamoDbException ex) {
             throw new DaoPersistenceException(

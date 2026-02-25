@@ -4,8 +4,12 @@ import type {ScanItemsPage} from '@/types/ScanItemsPage.ts';
 
 
 export const inventoryApi = {
-    getAllItemsPage: async (lastEvaluatedKey: string | null): Promise<ScanItemsPage> => {
+    getAllItemsPage: async (lastEvaluatedKey: string): Promise<ScanItemsPage> => {
         const response = await api.post<ScanItemsPage>('/items/all', lastEvaluatedKey ?? null);
+        return response.data;
+    },
+    getAllItemsPageWithoutEvaluatedKey: async (): Promise<ScanItemsPage> => {
+        const response = await api.post<ScanItemsPage>('/items/all');
         return response.data;
     },
     getItem: async (id: string): Promise<InventoryItem> => {
