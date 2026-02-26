@@ -5,7 +5,6 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger
 } from "@/components/ui/dialog.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {Field, FieldGroup} from "@/components/ui/field.tsx";
@@ -26,6 +25,7 @@ import {
 import {ScrollArea} from "@/components/ui/scroll-area.tsx";
 import {inventoryApi} from "@/api/inventoryApi.ts";
 import axios from "axios";
+import {Categories} from "@/types/Categories.ts";
 
 export function InventoryPop() {
     const defaultFormValues: InventoryItem = {
@@ -38,6 +38,7 @@ export function InventoryPop() {
         threshold: 0,
         isAvailable: false,
         currency: "USED",
+        shardKey: "PK1"
     }
 
     const {register, handleSubmit, reset, formState: {errors}, setValue} = useForm<InventoryItem>({
@@ -48,14 +49,9 @@ export function InventoryPop() {
     const [open, setOpen] = useState(false)
     // TODO add currency and availability dropdown menu
 
-    const categories = [
-        "Electronics",
-        "Furniture",
-        "Books",
-        "Clothing",
-        "Sports"
-    ]
     const currencies = ["USD", "EUR", "JPY", "GBP", "CNY"]
+    const randomNamePrefixes = ["Neo", "Ultra", "Prime", "Smart", "Eco", "Pro", "Lite"]
+    const randomNameBases = ["Widget", "Desk", "Reader", "Jacket", "Tracker", "Lamp", "Kit"]
 
     const clearForm = () => {
         reset(defaultFormValues)
@@ -67,6 +63,7 @@ export function InventoryPop() {
         console.log("submit inventoryItem for creating", {...data, currency})
         const payload = {
             ...data,
+            currency,
             threshold:
                 data.threshold == null || Number.isNaN(data.threshold)
                     ? 0
@@ -86,11 +83,45 @@ export function InventoryPop() {
         }
     }
 
+    const openAddNew = () => {
+        clearForm()
+        setOpen(true)
+    }
+
+    const openAddRandom = () => {
+        const randomCategory = Categories[Math.floor(Math.random() * Categories.length)]
+        const randomCurrency = currencies[Math.floor(Math.random() * currencies.length)]
+        const salt = Math.random().toString(36).slice(2, 8).toUpperCase()
+        const randomPrefix = randomNamePrefixes[Math.floor(Math.random() * randomNamePrefixes.length)]
+        const randomBase = randomNameBases[Math.floor(Math.random() * randomNameBases.length)]
+        const randomName = `${randomPrefix} ${randomBase} ${salt}`
+        const randomPrice = Number((Math.random() * 400 + 10).toFixed(2))
+        const randomStock = Math.floor(Math.random() * 300)
+        const randomThreshold = Math.floor(Math.random() * 50)
+        const randomAvailable = randomStock > randomThreshold
+
+        reset({
+            ...defaultFormValues,
+            name: randomName,
+            description: `${randomCategory} item ${salt}`,
+            category: randomCategory,
+            price: randomPrice,
+            stockLevel: randomStock,
+            threshold: randomThreshold,
+            isAvailable: randomAvailable,
+            currency: randomCurrency,
+        })
+        setCategoryValue(randomCategory)
+        setCurrency(randomCurrency)
+        setOpen(true)
+    }
+
     return <Dialog open={open} onOpenChange={setOpen}>
         <form>
-            <DialogTrigger asChild>
-                <Button type="button">Add New Item</Button>
-            </DialogTrigger>
+            <div className="flex items-center gap-2">
+                <Button type="button" variant="secondary" onClick={openAddRandom}>Add Random Item</Button>
+                <Button type="button" onClick={openAddNew}>Add New Item</Button>
+            </div>
             <DialogContent className="sm:max-w-sm">
                 <DialogHeader>
                     <DialogTitle>Edit new Inventory</DialogTitle>
@@ -152,7 +183,7 @@ export function InventoryPop() {
                                 <SelectContent>
                                     <SelectGroup>
                                         <SelectLabel>Category</SelectLabel>
-                                        {categories.map((category) => (
+                                        {Categories.map((category) => (
                                             <SelectItem key={category} value={category}>
                                                 {category}
                                             </SelectItem>

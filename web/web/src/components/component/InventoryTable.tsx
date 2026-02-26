@@ -8,7 +8,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table.tsx"
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {inventoryApi} from "@/api/inventoryApi.ts";
 import {Spinner} from "@/components/ui/spinner.tsx";
 import {ItemMedia} from "@/components/ui/item.tsx";
@@ -18,6 +18,7 @@ import {UpdatePop} from "@/components/component/UpdatePop.tsx";
 import axios from "axios";
 import type {ScanItemsPage} from "@/types/ScanItemsPage.ts";
 import {Button} from "@/components/ui/button.tsx";
+import {SearchInput} from "@/components/component/SearchInput.tsx";
 
 export function InventoryTable() {
     const [refreshTrigger, setRefreshTrigger] = useState<boolean>(false)
@@ -27,6 +28,12 @@ export function InventoryTable() {
     const [lastEvaluatedKey, setlastEvaluatedKey] = useState<string | null>(null)
     const [hasMore, setHasMore] = useState(true)
     const [item, setItem] = useState<InventoryItem | null>(null)
+    const [categoryFilter, setCategoryFilter] = useState("")
+    const [nameFilter, setNameFilter] = useState("")
+    const [stockFilter, setStockFilter] = useState("")
+    const [appliedCategoryFilter, setAppliedCategoryFilter] = useState("")
+    const [appliedNameFilter, setAppliedNameFilter] = useState("")
+    const [appliedStockFilter, setAppliedStockFilter] = useState("")
 
     useEffect(() => {
         void loadItems(true)
@@ -60,11 +67,53 @@ export function InventoryTable() {
         }
     }
 
+    const filteredItems = useMemo(() => {
+        const normalizedName = appliedNameFilter.trim().toLowerCase()
+        const parsedStock = Number(appliedStockFilter)
+        const hasStockFilter = appliedStockFilter.trim() !== "" && !Number.isNaN(parsedStock)
+        return items.filter((inventoryItem) => {
+            const categoryMatch = !appliedCategoryFilter || inventoryItem.category === appliedCategoryFilter
+            const nameMatch = !normalizedName || inventoryItem.name.toLowerCase().includes(normalizedName)
+            const stockMatch = !hasStockFilter || inventoryItem.stockLevel >= parsedStock
+            return categoryMatch && nameMatch && stockMatch
+        })
+    }, [items, appliedCategoryFilter, appliedNameFilter, appliedStockFilter])
+
+    const handleSearch = () => {
+        setAppliedCategoryFilter(categoryFilter)
+        setAppliedNameFilter(nameFilter)
+        setAppliedStockFilter(stockFilter)
+    }
+
+    const handleClearSearch = () => {
+        setCategoryFilter("")
+        setNameFilter("")
+        setStockFilter("")
+        setAppliedCategoryFilter("")
+        setAppliedNameFilter("")
+        setAppliedStockFilter("")
+    }
+
     return (
         <div>
+            <div className="mb-3">
+                <SearchInput
+                    category={categoryFilter}
+                    name={nameFilter}
+                    stock={stockFilter}
+                    onCategoryChange={setCategoryFilter}
+                    onNameChange={setNameFilter}
+                    onStockChange={setStockFilter}
+                    onSearch={handleSearch}
+                    onClear={handleClearSearch}
+                    disabled={isLoading}
+                />
+            </div>
             <Table>
                 <TableCaption>A list of your inventory items.</TableCaption>
-                <TableHeader>
+                <TableHeader
+                    className = 'bg-accent shadow-xs dark:bg-input/30'
+                >
                     <TableRow>
                         <TableHead className="[w-100px]">ItemId</TableHead>
                         <TableHead className="text-left">Name</TableHead>
@@ -80,13 +129,13 @@ export function InventoryTable() {
                 <TableBody>
                     {isLoading &&
                         <TableRow className="h-16" key="SpinnerTablerow">
-                            <TableCell colSpan={8} className="items-center">
+                            <TableCell colSpan={9} className="items-center">
                                 <Spinner className="w-12 h-12"/>
                             </TableCell>
 
                         </TableRow>
                     }
-                    {!isLoading && items.map((item: InventoryItem) => (
+                    {!isLoading && filteredItems.map((item: InventoryItem) => (
                         <TableRow key={item.itemId} onClick={() => {
                         }}>
                             <TableCell className="text-left font-medium">{item.itemId}</TableCell>
@@ -130,6 +179,13 @@ export function InventoryTable() {
                             </TableCell>
                         </TableRow>
                     ))}
+                    {!isLoading && filteredItems.length === 0 && (
+                        <TableRow>
+                            <TableCell colSpan={9} className="text-center text-muted-foreground">
+                                No items match the current filters.
+                            </TableCell>
+                        </TableRow>
+                    )}
                 </TableBody>
                 <TableFooter>
                     <TableRow>

@@ -18,7 +18,10 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 
-import java.io.*;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.*;
 import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
@@ -303,12 +306,13 @@ public class ItemsRepository {
         System.out.println("page items length " + page.items().size());
         Map<String, AttributeValue> lastEvaluatedKeyMap = page.lastEvaluatedKey();
         String lastEvaluatedKey = null;
-        if (lastEvaluatedKeyMap != null && lastEvaluatedKeyMap.containsKey("itemId")) {
+        if (lastEvaluatedKeyMap != null && !lastEvaluatedKeyMap.isEmpty()) {
             System.out.println("lastEvaluateKey is " + page.lastEvaluatedKey());
             try{
                 lastEvaluatedKey = this.encodePaginationToken(lastEvaluatedKeyMap);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                System.out.println("encodePaginationToken failed due to " + e.getMessage() + e.getCause());
+                return new ScanItemsPage(new ArrayList<>(page.items()), null);
             }
         }
         return new ScanItemsPage(
@@ -335,15 +339,57 @@ public class ItemsRepository {
     }
 
     private String encodePaginationToken(Map<String, AttributeValue> lastKey) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(baos);
-        oos.writeObject(lastKey);
-        return Base64.getEncoder().encodeToString(baos.toByteArray());
+        StringJoiner joiner = new StringJoiner("&");
+        for (Map.Entry<String, AttributeValue> entry : lastKey.entrySet()) {
+            AttributeValue value = entry.getValue();
+            String type;
+            String rawValue;
+            if (value.s() != null) {
+                type = "S";
+                rawValue = value.s();
+            } else if (value.n() != null) {
+                type = "N";
+                rawValue = value.n();
+            } else if (value.bool() != null) {
+                type = "BOOL";
+                rawValue = String.valueOf(value.bool());
+            } else {
+                throw new IOException("Unsupported key attribute type in lastEvaluatedKey: " + entry.getKey());
+            }
+            String keyPart = URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8);
+            String valuePart = URLEncoder.encode(rawValue, StandardCharsets.UTF_8);
+            joiner.add(keyPart + "=" + type + ":" + valuePart);
+        }
+        String payload = joiner.toString();
+        System.out.println("encodePaginationToken: " + payload);
+        return Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
     }
 
     private Map<String, AttributeValue> decodePaginationToken(String token) throws Exception {
-        byte[] data = Base64.getDecoder().decode(token);
-        ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data));
-        return (Map<String, AttributeValue>) ois.readObject();
+        String payload = new String(Base64.getUrlDecoder().decode(token), StandardCharsets.UTF_8);
+        Map<String, AttributeValue> result = new LinkedHashMap<>();
+        if (payload.isBlank()) {
+            return result;
+        }
+        for (String pair : payload.split("&")) {
+            int equalIndex = pair.indexOf('=');
+            int colonIndex = pair.indexOf(':', equalIndex + 1);
+            if (equalIndex <= 0 || colonIndex <= equalIndex + 1) {
+                throw new IOException("Invalid pagination token format");
+            }
+            String key = URLDecoder.decode(pair.substring(0, equalIndex), StandardCharsets.UTF_8);
+            String type = pair.substring(equalIndex + 1, colonIndex);
+            String rawValue = URLDecoder.decode(pair.substring(colonIndex + 1), StandardCharsets.UTF_8);
+            AttributeValue attributeValue = switch (type) {
+                case "S" -> AttributeValue.builder().s(rawValue).build();
+                case "N" -> AttributeValue.builder().n(rawValue).build();
+                case "BOOL" -> AttributeValue.builder().bool(Boolean.parseBoolean(rawValue)).build();
+                default -> throw new IOException("Unsupported key attribute type in token: " + type);
+            };
+            result.put(key, attributeValue);
+        }
+        System.out.println("decodePaginationToken: " + result);
+        return result;
     }
 }
