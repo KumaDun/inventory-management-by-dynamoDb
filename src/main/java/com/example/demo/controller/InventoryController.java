@@ -51,6 +51,24 @@ public class InventoryController {
         return ResponseEntity.ok(inventoryService.getInventoryItems(exclusiveStartKey));
     }
 
+    @GetMapping("/all/category")
+    public ResponseEntity<ScanItemsPage> getInventoryItemsByCategoryAndName(
+            @RequestParam String category, @RequestParam(required = false) String name, @RequestParam(required = false) String exclusiveStartKey) {
+        System.out.println("InventoryController get /all category " + category + ", name " + name);
+        if (name != null && !name.isBlank()) {
+            return ResponseEntity.ok(inventoryService.getInventoryItemsByCategoryAndName(category,name, exclusiveStartKey));
+        } else {
+            return ResponseEntity.ok(inventoryService.getInventoryItemsByCategoryAndName(category,null, exclusiveStartKey));
+        }
+    }
+
+    @GetMapping("/all/name")
+    public ResponseEntity<ScanItemsPage> getInventoryItemsByName(
+        @RequestParam String name, @RequestParam(required = false) String exclusiveStartKey
+    ) {
+        return ResponseEntity.ok(inventoryService.getInventoryItemsByName(name, exclusiveStartKey));
+    }
+
     @PatchMapping("/patch")
     public ResponseEntity<InventoryItem> updateInventoryItem(@RequestBody InventoryItem item) {
         Optional<InventoryItem> updated = inventoryService.updateInventoryItem(item.getItemId(), item);

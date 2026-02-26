@@ -8,9 +8,9 @@ import com.example.demo.exceptions.serviceExceptions.ItemConflictException;
 import com.example.demo.model.InventoryItem;
 import com.example.demo.model.ScanItemsPage;
 import jakarta.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import java.util.Map;
 import java.util.Optional;
@@ -102,5 +102,16 @@ public class InventoryService {
 
     public ScanItemsPage getInventoryItems(@Nullable String exclusiveStartKey) {
         return itemsRepository.scanItems(exclusiveStartKey);
+    }
+
+    public ScanItemsPage getInventoryItemsByCategoryAndName(
+            @NonNull String category, @Nullable String name, @Nullable String exclusiveStartKey) {
+        return itemsRepository.searchItemsByCategoryNameGsi(category, name, exclusiveStartKey);
+    }
+
+    public ScanItemsPage getInventoryItemsByName(
+            @NonNull String name, @Nullable String exclusiveStartKey
+    ) {
+        return itemsRepository.searchItemsByShardNameGsi(name, exclusiveStartKey);
     }
 }

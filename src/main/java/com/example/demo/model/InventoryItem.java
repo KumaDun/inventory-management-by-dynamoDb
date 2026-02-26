@@ -2,6 +2,8 @@ package com.example.demo.model;
 
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondaryPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondarySortKey;
 
 @DynamoDbBean
 public class InventoryItem {
@@ -21,6 +23,7 @@ public class InventoryItem {
         return itemId;
     }
 
+    @DynamoDbSecondarySortKey(indexNames = {"category-name-index", "shardKey-name-index"})
     public String getName() {
         return name;
     }
@@ -37,6 +40,7 @@ public class InventoryItem {
         return stockLevel;
     }
 
+    @DynamoDbSecondaryPartitionKey(indexNames = {"category-name-index"})
     public String getCategory() {
         return category;
     }
@@ -93,6 +97,7 @@ public class InventoryItem {
         return shardKey;
     }
 
+    @DynamoDbSecondaryPartitionKey(indexNames = "shardKey-name-index")
     public void setShardKey(String shardKey) {
         this.shardKey = shardKey;
     }

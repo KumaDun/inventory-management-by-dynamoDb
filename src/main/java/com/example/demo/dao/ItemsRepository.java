@@ -5,26 +5,23 @@ import com.example.demo.exceptions.daoExceptions.DaoPersistenceException;
 import com.example.demo.model.InventoryItem;
 
 import com.example.demo.model.ScanItemsPage;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import software.amazon.awssdk.core.pagination.sync.SdkIterable;
 import software.amazon.awssdk.enhanced.dynamodb.*;
-import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
-import software.amazon.awssdk.enhanced.dynamodb.model.Page;
-import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
-import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest;
-import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.*;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
-import java.util.List;
-import java.util.ArrayList;
 
 @Repository
 public class ItemsRepository {
@@ -36,16 +33,18 @@ public class ItemsRepository {
         this.itemsTable = enhancedClient.table(tableName, TableSchema.fromBean(InventoryItem.class));
     }
 
-    private String computeShardKey(String itemId) {
-        if (itemId == null || itemId.isBlank()) {
-            return "PK1";
-        }
-        char last = itemId.charAt(itemId.length() - 1);
-        int v = Character.digit(last, 16);
-        if (v < 0) {
-            v = -v;
-        }
-        return (v % 2 == 0) ? "PK2" : "PK1";
+    private @NonNull String computeShardKey(String itemId) {
+        return "PK1";
+        // Two sharding is abandoned for ease of maintaining shard cursor
+//        if (itemId == null || itemId.isBlank()) {
+//            return "PK1";
+//        }
+//        char last = itemId.charAt(itemId.length() - 1);
+//        int v = Character.digit(last, 16);
+//        if (v < 0) {
+//            v = -v;
+//        }
+//        return (v % 2 == 0) ? "PK2" : "PK1";
     }
 
     public int backfillMissingShardKeys(int pageSize) {
@@ -206,42 +205,145 @@ public class ItemsRepository {
         this.updateAttributeByItemId(itemId, item -> item.setAvailable(available));
     }
 
-    public ScanItemsPage scanItems(String exclusiveStartKey) {
+    public ScanItemsPage scanItems(@Nullable String exclusiveStartKey) {
         try {
-            String normalizedStartKey = exclusiveStartKey == null ? null : exclusiveStartKey.trim();
-            if (normalizedStartKey != null &&
-                    (normalizedStartKey.isEmpty() || "null".equalsIgnoreCase(normalizedStartKey))) {
-                normalizedStartKey = null;
+            if (exclusiveStartKey != null &&
+                    (exclusiveStartKey.isEmpty() || "null".equalsIgnoreCase(exclusiveStartKey))) {
+                exclusiveStartKey = null;
             }
             ScanEnhancedRequest.Builder scanBuilder = ScanEnhancedRequest.builder()
                     .consistentRead(true)
                     .limit(10);
-            if (normalizedStartKey != null) {
-                System.out.println("build exclusiveStartKey");
-                scanBuilder.exclusiveStartKey(
-                        Map.of("itemId", AttributeValue.builder().s(normalizedStartKey).build())
-                );
+            if (exclusiveStartKey != null) {
+                try {
+                    System.out.println("build exclusiveStartKey");
+                    Map<String, AttributeValue> lastEvaluatedKey = this.decodePaginationToken(exclusiveStartKey);
+                    scanBuilder.exclusiveStartKey(lastEvaluatedKey);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
             }
             PageIterable<InventoryItem> pages = itemsTable.scan(scanBuilder.build());
-            java.util.Iterator<Page<InventoryItem>> iterator = pages.iterator();
-            if (!iterator.hasNext()) {
-                System.out.println("iterator hasNoNext");
-                return new ScanItemsPage(List.of(), null);
-            }
-            Page<InventoryItem> page = iterator.next();
-            System.out.println("page items length " + page.items().size());
-            Map<String, AttributeValue> lastEvaluatedKeyMap = page.lastEvaluatedKey();
-            String lastEvaluatedKey = null;
-            if (lastEvaluatedKeyMap != null && lastEvaluatedKeyMap.containsKey("itemId")) {
-                lastEvaluatedKey = lastEvaluatedKeyMap.get("itemId").s();
-            }
-            return new ScanItemsPage(
-                    new ArrayList<>(page.items()), lastEvaluatedKey
-            );
+            return this.processPagesIterable(pages);
         } catch (DynamoDbException ex) {
             throw new DaoPersistenceException(
                     "DynamoDB scan operation failed",
                     ex);
         }
+    }
+
+    public ScanItemsPage searchItemsByCategoryNameGsi(@NonNull String category, @Nullable String name, @Nullable String exclusiveStartKey) {
+        try {
+            DynamoDbIndex<InventoryItem> categoryNameGsi = itemsTable.index("category-name-index");
+            Key.Builder keyBuilder = Key.builder();
+            QueryConditional queryConditional;
+            if (name != null && !name.isBlank()) {
+                keyBuilder.sortValue(name.trim());
+                Key key = keyBuilder.partitionValue(category).build();
+                queryConditional = QueryConditional.sortBeginsWith(key);
+            } else {
+                Key key = keyBuilder.partitionValue(category).build();
+                queryConditional = QueryConditional.keyEqualTo(key);
+            }
+            QueryEnhancedRequest.Builder queryBuilder = this.generateRequestBuilderWithExclusiveStartKey(
+                    exclusiveStartKey);
+            QueryEnhancedRequest request = queryBuilder
+                    .queryConditional(queryConditional)
+                    .limit(10)
+                    .build();
+            SdkIterable<Page<InventoryItem>> pagesIterable = categoryNameGsi.query(request);
+            return this.processPagesIterable(pagesIterable);
+        } catch (DynamoDbException ex) {
+            throw new DaoPersistenceException(
+                    "DynamoDB category-name-index scan operation failed",
+                    ex);
+        }
+    }
+
+    public ScanItemsPage searchItemsByShardNameGsi(@NonNull String name, @Nullable String exclusiveStartKey) {
+        try {
+            DynamoDbIndex<InventoryItem> shardNameGsi = itemsTable.index("shardKey-name-index");
+            String normalizedName = name.trim();
+            Key key = Key.builder()
+                    .partitionValue("PK1")
+                    .sortValue(normalizedName)
+                    .build();
+            QueryConditional queryConditional = QueryConditional.sortBeginsWith(key);
+            QueryEnhancedRequest.Builder requestBuilder = this.generateRequestBuilderWithExclusiveStartKey(exclusiveStartKey);
+            QueryEnhancedRequest request = requestBuilder
+                    .queryConditional(queryConditional)
+                    .limit(5)
+                    .build();
+            SdkIterable<Page<InventoryItem>> pagesIterable = shardNameGsi.query(request);
+            return this.processPagesIterable(pagesIterable);
+        } catch (CompletionException ex) {
+            Throwable cause = ex.getCause();
+            if (cause instanceof DynamoDbException dynamoDbException) {
+                throw new DaoPersistenceException(
+                        "DynamoDB shardKey-name-index query operation failed",
+                        dynamoDbException);
+            }
+            throw new DaoPersistenceException(
+                    "Concurrent shard query failed",
+                    ex);
+        } catch (DynamoDbException ex) {
+            throw new DaoPersistenceException(
+                    "DynamoDB shardKey-name-index query operation failed",
+                    ex);
+        }
+    }
+
+    private ScanItemsPage processPagesIterable(SdkIterable<Page<InventoryItem>> iterable) {
+        Iterator<Page<InventoryItem>> iterator = iterable.iterator();
+        if (!iterator.hasNext()) {
+            System.out.println("iterator hasNoNext");
+            return new ScanItemsPage(List.of(), null);
+        }
+        Page<InventoryItem> page = iterator.next();
+        System.out.println("page items length " + page.items().size());
+        Map<String, AttributeValue> lastEvaluatedKeyMap = page.lastEvaluatedKey();
+        String lastEvaluatedKey = null;
+        if (lastEvaluatedKeyMap != null && lastEvaluatedKeyMap.containsKey("itemId")) {
+            System.out.println("lastEvaluateKey is " + page.lastEvaluatedKey());
+            try{
+                lastEvaluatedKey = this.encodePaginationToken(lastEvaluatedKeyMap);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return new ScanItemsPage(
+                new ArrayList<>(page.items()), lastEvaluatedKey
+        );
+    }
+
+    private QueryEnhancedRequest.Builder generateRequestBuilderWithExclusiveStartKey(@Nullable String exclusiveStartKey) {
+        QueryEnhancedRequest.Builder queryBuilder = QueryEnhancedRequest.builder();
+        if (exclusiveStartKey != null &&
+                (exclusiveStartKey.isEmpty() || "null".equalsIgnoreCase(exclusiveStartKey))) {
+            exclusiveStartKey = null;
+        }
+        if (exclusiveStartKey != null) {
+            System.out.println("build exclusiveStartKey");
+            try {
+                Map<String, AttributeValue>lastExclusiveStartKey = this.decodePaginationToken(exclusiveStartKey);
+                queryBuilder.exclusiveStartKey(lastExclusiveStartKey);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return queryBuilder;
+    }
+
+    private String encodePaginationToken(Map<String, AttributeValue> lastKey) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+        oos.writeObject(lastKey);
+        return Base64.getEncoder().encodeToString(baos.toByteArray());
+    }
+
+    private Map<String, AttributeValue> decodePaginationToken(String token) throws Exception {
+        byte[] data = Base64.getDecoder().decode(token);
+        ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data));
+        return (Map<String, AttributeValue>) ois.readObject();
     }
 }

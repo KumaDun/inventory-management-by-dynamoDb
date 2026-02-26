@@ -41,8 +41,16 @@ public class DynamoDbTableInitializer {
             throw new RuntimeException(e);
         }
         createIndex(itemsTableName, "category", "name");
-        int updatedRows = itemsRepository.backfillMissingShardKeys(100);
-        System.out.println("Backfilled shardKey for " + updatedRows + " inventory items.");
+//         Only run for once. Backfilling items that are missing shardKey
+
+//         int updatedRows = itemsRepository.backfillMissingShardKeys(100);
+//         try {
+//               waitUntilTableActive(itemsTableName);
+//          } catch (TimeoutException e) {
+//               throw new RuntimeException(e);
+//           }
+//          System.out.println("Backfilled shardKey for " + updatedRows + " inventory items.");
+
         createIndex(itemsTableName, "shardKey", "name");
     }
 
