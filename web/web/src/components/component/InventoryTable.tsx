@@ -8,7 +8,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table.tsx"
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useEffect, useMemo, useState} from "react";
 import {inventoryApi} from "@/api/inventoryApi.ts";
 import {Spinner} from "@/components/ui/spinner.tsx";
 import {ItemRow} from "@/components/component/ItemRow.tsx"
@@ -18,6 +18,10 @@ import {SearchInput} from "@/components/component/SearchInput.tsx";
 import axios from "axios";
 import {UpdatePop} from "@/components/component/UpdatePop.tsx";
 import {DeletePop} from "@/components/component/DeletePop.tsx";
+import {ArrowDownAZ, ArrowUpAZ, ArrowUpDown} from "lucide-react";
+
+type SortField = "name" | "price" | "category"
+type SortDirection = "asc" | "desc"
 
 export function InventoryTable(
     {isLoadingLinker} : {isLoadingLinker: (isLoading: boolean) => void}
@@ -29,6 +33,8 @@ export function InventoryTable(
     const [isUpdating, setIsUpdating] = useState<boolean>(false)
     const [isDeleting, setIsDeleting] = useState<boolean>(false)
     const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
+    const [sortField, setSortField] = useState<SortField | null>(null)
+    const [sortDirection, setSortDirection] = useState<SortDirection>("asc")
 
     useEffect(() => {
         void loadItems(true)
@@ -76,6 +82,56 @@ export function InventoryTable(
         setIsDeleting(true)
     }, [])
 
+    const handleSort = useCallback((field: SortField) => {
+        setSortField((prevField) => {
+            if (prevField === field) {
+                setSortDirection((prevDirection) => prevDirection === "asc" ? "desc" : "asc")
+                return prevField
+            }
+            setSortDirection("asc")
+            return field
+        })
+    }, [])
+
+    const sortedItems = useMemo(() => {
+        if (!sortField) {
+            return items
+        }
+
+        const sorted = [...items].sort((leftItem, rightItem) => {
+            if (sortField === "price") {
+                return sortDirection === "asc"
+                    ? leftItem.price - rightItem.price
+                    : rightItem.price - leftItem.price
+            }
+
+            const leftValue = leftItem[sortField].toLowerCase()
+            const rightValue = rightItem[sortField].toLowerCase()
+            const compareResult = leftValue.localeCompare(rightValue)
+
+            return sortDirection === "asc" ? compareResult : -compareResult
+        })
+
+        return sorted
+    }, [items, sortDirection, sortField])
+
+    const renderSortButton = (field: SortField) => {
+        const isActive = sortField === field
+        const Icon = !isActive ? ArrowUpDown : sortDirection === "asc" ? ArrowUpAZ : ArrowDownAZ
+
+        return (
+            <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 px-1 text-muted-foreground hover:text-foreground"
+                onClick={() => handleSort(field)}
+            >
+                <Icon className="size-3.5" />
+            </Button>
+        )
+    }
+
     return (
         <div>
             <div className="mb-3">
@@ -94,18 +150,33 @@ export function InventoryTable(
                 >
                     <TableRow>
                         <TableHead className="[w-100px]">ItemId</TableHead>
-                        <TableHead className="text-left">Name</TableHead>
+                        <TableHead className="text-left">
+                            <div className="flex items-center gap-1">
+                                <span>Name</span>
+                                {renderSortButton("name")}
+                            </div>
+                        </TableHead>
                         <TableHead className="text-left">Description</TableHead>
-                        <TableHead className="text-left">Price</TableHead>
+                        <TableHead className="text-left">
+                            <div className="flex items-center gap-1">
+                                <span>Price</span>
+                                {renderSortButton("price")}
+                            </div>
+                        </TableHead>
                         <TableHead className="text-left">Stock</TableHead>
-                        <TableHead className="text-left">Category</TableHead>
+                        <TableHead className="text-left">
+                            <div className="flex items-center gap-1">
+                                <span>Category</span>
+                                {renderSortButton("category")}
+                            </div>
+                        </TableHead>
                         <TableHead className="text-left">Threshold</TableHead>
                         <TableHead className="text-left">Available</TableHead>
                         <TableHead className="text-left">Operation</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {items.map((item: InventoryItem) => (
+                    {sortedItems.map((item: InventoryItem) => (
                         <ItemRow
                             key={item.itemId}
                             item ={item}
