@@ -4,4 +4,4 @@ export const Categories = [
     "Books",
     "Clothing",
     "Sports"
-]
+] as const

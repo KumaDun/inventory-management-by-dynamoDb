@@ -11,51 +11,55 @@ import {
 import {Categories} from "@/types/Categories.ts";
 import {Input} from "@/components/ui/input.tsx";
 import {Button} from "@/components/ui/button.tsx";
+import {useInventoryFilters} from "@/utilities/useInventoryFilters.ts";
+import {Spinner} from "@/components/ui/spinner.tsx";
+import type {InventoryItem} from "@/types/InventoryItem.ts";
+type Category = (typeof Categories) [number]
 
-type SearchInputProps = {
-    category: string
-    name: string
-    stock: string
-    onCategoryChange: (value: string) => void
-    onNameChange: (value: string) => void
-    onStockChange: (value: string) => void
-    onSearch: () => void
-    onClear: () => void
-    disabled?: boolean
-}
 
-export function SearchInput({
-    category,
-    name,
-    stock,
-    onCategoryChange,
-    onNameChange,
-    onStockChange,
-    onSearch,
-    onClear,
-    disabled = false,
-}: SearchInputProps) {
+export function SearchInput(
+    {disabled = false, displayResult}:
+    { disabled ?: boolean, displayResult: (result: InventoryItem[]) => void}
+) {
+    const {
+        categoryFilter,
+        nameFilter,
+        stockFilter,
+        setCategoryFilter,
+        setNameFilter,
+        setStockFilter,
+        handleSearch,
+        handleClearSearch,
+        isLoading,
+    } = useInventoryFilters()
+
+
     return (
         <form
-            className="flex justify-between flex-row gap-2 rounded-md border bg-muted/20 p-3 md:flex-row md:items-center"
+            className="flex flex-col gap-2 rounded-md border bg-muted/20 p-3 sm:flex-row sm:flex-wrap sm:items-center"
             onSubmit={(event) => {
                 event.preventDefault()
-                onSearch()
+                handleSearch().then((result) => {
+                    console.log(`searchInput get result length ${result.length}`)
+                    displayResult(result);
+                }).catch((err) => {
+                    console.log(`onSubmit handleSearch error ${err}`)
+                })
             }}
         >
-            <div className="flex flex-row gap-2">
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-1 sm:flex-row sm:flex-wrap sm:items-center">
                 <Select
-                    value={category || "all"}
-                    onValueChange={(value) => onCategoryChange(value === "all" ? "" : value)}
-                    disabled={disabled}
+                    value={categoryFilter}
+                    onValueChange={(value: Category) => setCategoryFilter(value)}
+                    disabled={disabled || isLoading}
                 >
-                    <SelectTrigger className="w-full md:w-64">
+                    <SelectTrigger className="w-full sm:w-52">
                         <SelectValue placeholder="All categories" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectGroup>
                             <SelectLabel>Category</SelectLabel>
-                            <SelectItem value="all">All</SelectItem>
+                            <SelectItem value="All">All</SelectItem>
                             {Categories.map((categoryValue) => (
                                 <SelectItem key={categoryValue} value={categoryValue}>
                                     {categoryValue}
@@ -67,30 +71,34 @@ export function SearchInput({
                 <Input
                     id="name_search"
                     type="text"
-                    value={name}
-                    onChange={(event) => onNameChange(event.target.value)}
+                    value={nameFilter}
+                    onChange={(event) => setNameFilter(event.target.value)}
                     placeholder="Search by item name"
-                    className="w-full md:max-w-sm"
-                    disabled={disabled}
+                    className="w-full sm:min-w-52 sm:flex-1"
+                    disabled={disabled || isLoading}
                 />
                 <Input
                     id="stock_filter"
                     type="number"
                     min={0}
-                    value={stock}
-                    onChange={(event) => onStockChange(event.target.value)}
+                    value={stockFilter}
+                    onChange={(event) => setStockFilter(Number(event.target.value))}
                     placeholder="Min stock"
-                    className="w-full md:w-64"
-                    disabled={disabled}
+                    className="w-full sm:w-32"
+                    disabled={disabled || isLoading}
                 />
             </div>
 
-            <div className="flex flex-row gap-4">
-                <Button type="submit" className="md:min-w-24" disabled={disabled}>
-                    <Search className="mr-1 size-4" />
+            <div className="flex w-full gap-2 sm:ml-auto sm:w-auto">
+                <Button type="submit" className="flex-1 sm:min-w-24 sm:flex-none" disabled={disabled || isLoading}>
+                    {
+                        isLoading ?
+                        <Spinner className="mr-1 size-4" /> :
+                        <Search className="mr-1 size-4" />
+                    }
                     Search
                 </Button>
-                <Button type="button" variant="outline" className="md:min-w-24" onClick={onClear} disabled={disabled}>
+                <Button type="button" variant="outline" className="flex-1 sm:min-w-24 sm:flex-none" onClick={() => handleClearSearch()} disabled={disabled}>
                     <X className="mr-1 size-4" />
                     Clear
                 </Button>

@@ -8,7 +8,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table.tsx"
-import {useEffect, useMemo, useState} from "react";
+import {useEffect, useState} from "react";
 import {inventoryApi} from "@/api/inventoryApi.ts";
 import {Spinner} from "@/components/ui/spinner.tsx";
 import {ItemMedia} from "@/components/ui/item.tsx";
@@ -16,11 +16,12 @@ import {SquarePen, Trash2} from 'lucide-react';
 import type {InventoryItem} from "@/types/InventoryItem.ts";
 import {UpdatePop} from "@/components/component/UpdatePop.tsx";
 import axios from "axios";
-import type {ScanItemsPage} from "@/types/ScanItemsPage.ts";
 import {Button} from "@/components/ui/button.tsx";
 import {SearchInput} from "@/components/component/SearchInput.tsx";
 
-export function InventoryTable() {
+export function InventoryTable(
+    {isLoadingLinker} : {isLoadingLinker: (isLoading: boolean) => void}
+) {
     const [refreshTrigger, setRefreshTrigger] = useState<boolean>(false)
     const [isLoading, setIsLoading] = useState(false)
     const [isUpdating, setIsUpdating] = useState<boolean>(false)
@@ -28,12 +29,6 @@ export function InventoryTable() {
     const [lastEvaluatedKey, setlastEvaluatedKey] = useState<string | null>(null)
     const [hasMore, setHasMore] = useState(true)
     const [item, setItem] = useState<InventoryItem | null>(null)
-    const [categoryFilter, setCategoryFilter] = useState("")
-    const [nameFilter, setNameFilter] = useState("")
-    const [stockFilter, setStockFilter] = useState("")
-    const [appliedCategoryFilter, setAppliedCategoryFilter] = useState("")
-    const [appliedNameFilter, setAppliedNameFilter] = useState("")
-    const [appliedStockFilter, setAppliedStockFilter] = useState("")
 
     useEffect(() => {
         void loadItems(true)
@@ -43,14 +38,15 @@ export function InventoryTable() {
         if (!replace && !hasMore) return
         try {
             setIsLoading(true)
+            isLoadingLinker(true)
             const cursor = replace ? null : lastEvaluatedKey
             console.log('cursor sent', cursor)
-            let data: ScanItemsPage
-            if (!cursor) {
-                data = await inventoryApi.getAllItemsPageWithoutEvaluatedKey()
-            } else {
-                data = await inventoryApi.getAllItemsPage(cursor)
-            }
+            // let data: ScanItemsPage
+            // if (!cursor) {
+                const data = await inventoryApi.getAllItemsPage(cursor)
+            // } else {
+            //     data = await inventoryApi.getAllItemsPage(cursor)
+            // }
             setlastEvaluatedKey(data.lastEvaluatedKey)
             setHasMore(data.lastEvaluatedKey != null)
             console.log('lastEvaluatedKey', data.lastEvaluatedKey)
@@ -63,50 +59,22 @@ export function InventoryTable() {
         } catch (error) {
             console.log(error)
         } finally {
-            setTimeout(() => setIsLoading(false), 1000)
+            setTimeout(() => {
+                setIsLoading(false);
+                isLoadingLinker(false);
+            }, 1000)
         }
-    }
-
-    const filteredItems = useMemo(() => {
-        const normalizedName = appliedNameFilter.trim().toLowerCase()
-        const parsedStock = Number(appliedStockFilter)
-        const hasStockFilter = appliedStockFilter.trim() !== "" && !Number.isNaN(parsedStock)
-        return items.filter((inventoryItem) => {
-            const categoryMatch = !appliedCategoryFilter || inventoryItem.category === appliedCategoryFilter
-            const nameMatch = !normalizedName || inventoryItem.name.toLowerCase().includes(normalizedName)
-            const stockMatch = !hasStockFilter || inventoryItem.stockLevel >= parsedStock
-            return categoryMatch && nameMatch && stockMatch
-        })
-    }, [items, appliedCategoryFilter, appliedNameFilter, appliedStockFilter])
-
-    const handleSearch = () => {
-        setAppliedCategoryFilter(categoryFilter)
-        setAppliedNameFilter(nameFilter)
-        setAppliedStockFilter(stockFilter)
-    }
-
-    const handleClearSearch = () => {
-        setCategoryFilter("")
-        setNameFilter("")
-        setStockFilter("")
-        setAppliedCategoryFilter("")
-        setAppliedNameFilter("")
-        setAppliedStockFilter("")
     }
 
     return (
         <div>
             <div className="mb-3">
                 <SearchInput
-                    category={categoryFilter}
-                    name={nameFilter}
-                    stock={stockFilter}
-                    onCategoryChange={setCategoryFilter}
-                    onNameChange={setNameFilter}
-                    onStockChange={setStockFilter}
-                    onSearch={handleSearch}
-                    onClear={handleClearSearch}
                     disabled={isLoading}
+                    displayResult={(result: InventoryItem[]) => {
+                        setItems(result)
+                        console.log(`table received ${result.length} result from SearchInput`)
+                    }}
                 />
             </div>
             <Table>
@@ -135,7 +103,7 @@ export function InventoryTable() {
 
                         </TableRow>
                     }
-                    {!isLoading && filteredItems.map((item: InventoryItem) => (
+                    {!isLoading && items.map((item: InventoryItem) => (
                         <TableRow key={item.itemId} onClick={() => {
                         }}>
                             <TableCell className="text-left font-medium">{item.itemId}</TableCell>
@@ -179,7 +147,7 @@ export function InventoryTable() {
                             </TableCell>
                         </TableRow>
                     ))}
-                    {!isLoading && filteredItems.length === 0 && (
+                    {!isLoading && items.length === 0 && (
                         <TableRow>
                             <TableCell colSpan={9} className="text-center text-muted-foreground">
                                 No items match the current filters.

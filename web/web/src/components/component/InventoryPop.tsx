@@ -27,7 +27,7 @@ import {inventoryApi} from "@/api/inventoryApi.ts";
 import axios from "axios";
 import {Categories} from "@/types/Categories.ts";
 
-export function InventoryPop() {
+export function InventoryPop({disable = true}: {disable: boolean}) {
     const defaultFormValues: InventoryItem = {
         itemId: "placeholderId",
         name: "",
@@ -119,8 +119,12 @@ export function InventoryPop() {
     return <Dialog open={open} onOpenChange={setOpen}>
         <form>
             <div className="flex items-center gap-2">
-                <Button type="button" variant="secondary" onClick={openAddRandom}>Add Random Item</Button>
-                <Button type="button" onClick={openAddNew}>Add New Item</Button>
+                <Button type="button" variant="secondary" onClick={openAddRandom} disabled={disable}>
+                    Add Random Item
+                </Button>
+                <Button type="button" onClick={openAddNew} disabled={disable}>
+                    Add New Item
+                </Button>
             </div>
             <DialogContent className="sm:max-w-sm">
                 <DialogHeader>

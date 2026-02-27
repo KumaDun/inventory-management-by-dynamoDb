@@ -4,16 +4,33 @@ import type {ScanItemsPage} from '@/types/ScanItemsPage.ts';
 
 
 export const inventoryApi = {
-    getAllItemsPage: async (lastEvaluatedKey: string): Promise<ScanItemsPage> => {
-        const response = await api.post<ScanItemsPage>('/items/all', lastEvaluatedKey ?? null);
+    getAllItemsPage: async (exclusiveStartKey: string | null | undefined): Promise<ScanItemsPage> => {
+        const response = await api.post<ScanItemsPage>('/items/all', exclusiveStartKey ?? null);
         return response.data;
     },
-    getAllItemsPageWithoutEvaluatedKey: async (): Promise<ScanItemsPage> => {
-        const response = await api.post<ScanItemsPage>('/items/all');
-        return response.data;
-    },
-    getItem: async (id: string): Promise<InventoryItem> => {
+    getItemById: async (id: string): Promise<InventoryItem> => {
         const response = await api.get<InventoryItem>(`/items/get?id=${id}`);
+        return response.data;
+    },
+    getItemsByCategory: async(category: string, exclusiveStartKey: string | null | undefined): Promise<ScanItemsPage> => {
+        const url: string = exclusiveStartKey ?
+            `/items/all/category?category=${category}&name=${''}&exclusiveStartKey=${exclusiveStartKey}` :
+            `/items/all/category?category=${category}`;
+        const response = await api.get<ScanItemsPage>(url);
+        return response.data;
+    },
+    getItemsByCategoryAndName: async (category: string, name: string, exclusiveStartKey: string | null | undefined): Promise<ScanItemsPage> => {
+        const url: string = exclusiveStartKey ?
+            `/items/all/category?category=${category}&name=${name}&exclusiveStartKey=${exclusiveStartKey}` :
+            `/items/all/category?category=${category}&name=${name}`;
+        const response = await api.get<ScanItemsPage>(url);
+        return response.data;
+    },
+    getItemsByName: async (name: string, exclusiveStartKey: string | null | undefined): Promise<ScanItemsPage> => {
+        const url: string = exclusiveStartKey ?
+            `/items/all/name?&name=${name}&exclusiveStartKey=${exclusiveStartKey}` :
+            `/items/all/name?&name=${name}`;
+        const response = await api.get<ScanItemsPage>(url);
         return response.data;
     },
     createItem: async (item: InventoryItem): Promise<InventoryItem> => {
