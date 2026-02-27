@@ -9,6 +9,8 @@ export const ItemRow = memo(function ItemRow({item, onEdit, onDelete}: {
     onEdit: (item: InventoryItem) => void,
     onDelete: (item: InventoryItem) => void,
 }) {
+    console.log("render now", item.itemId)
+
     return (
         <TableRow onClick={() => {
         }}>
