@@ -103,7 +103,6 @@ export function SearchInput(
                     Clear
                 </Button>
             </div>
-
         </form>
     )
 }

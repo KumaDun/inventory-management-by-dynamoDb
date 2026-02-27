@@ -225,6 +225,7 @@ export function InventoryPop({disable = true}: {disable: boolean}) {
                                     type="number"
                                     // value = {item.price}
                                     placeholder="1200"
+                                    min={0}
                                     required
                                 />
                                 <Select value={currency} onValueChange={setCurrency}>
@@ -268,6 +269,7 @@ export function InventoryPop({disable = true}: {disable: boolean}) {
                             type="number"
                             // value = {item.stockLevel}
                             placeholder="200"
+                            min={0}
                             required
                         />
                             {errors.stockLevel && (
