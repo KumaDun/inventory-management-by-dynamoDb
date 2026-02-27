@@ -77,16 +77,16 @@ export function SearchInput(
                     className="w-full sm:min-w-52 sm:flex-1"
                     disabled={disabled || isLoading}
                 />
-                <Input
-                    id="stock_filter"
-                    type="number"
-                    min={0}
-                    value={stockFilter}
-                    onChange={(event) => setStockFilter(Number(event.target.value))}
-                    placeholder="Min stock"
-                    className="w-full sm:w-32"
-                    disabled={disabled || isLoading}
-                />
+                {/*<Input*/}
+                {/*    id="stock_filter"*/}
+                {/*    type="number"*/}
+                {/*    min={0}*/}
+                {/*    value={stockFilter}*/}
+                {/*    onChange={(event) => setStockFilter(Number(event.target.value))}*/}
+                {/*    placeholder="Min stock"*/}
+                {/*    className="w-full sm:w-32"*/}
+                {/*    disabled={disabled || isLoading}*/}
+                {/*/>*/}
             </div>
 
             <div className="flex w-full gap-2 sm:ml-auto sm:w-auto">

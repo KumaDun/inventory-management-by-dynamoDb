@@ -5,14 +5,17 @@ import type {ScanItemsPage} from '@/types/ScanItemsPage.ts';
 
 export const inventoryApi = {
     getAllItemsPage: async (exclusiveStartKey: string | null | undefined): Promise<ScanItemsPage> => {
+        console.log('Inventory Api getAllItemsPage');
         const response = await api.post<ScanItemsPage>('/items/all', exclusiveStartKey ?? null);
         return response.data;
     },
     getItemById: async (id: string): Promise<InventoryItem> => {
+        console.log('Inventory Api getItemById');
         const response = await api.get<InventoryItem>(`/items/get?id=${id}`);
         return response.data;
     },
     getItemsByCategory: async(category: string, exclusiveStartKey: string | null | undefined): Promise<ScanItemsPage> => {
+        console.log('Inventory Api getItemsByCategory');
         const url: string = exclusiveStartKey ?
             `/items/all/category?category=${category}&name=${''}&exclusiveStartKey=${exclusiveStartKey}` :
             `/items/all/category?category=${category}`;
@@ -20,6 +23,7 @@ export const inventoryApi = {
         return response.data;
     },
     getItemsByCategoryAndName: async (category: string, name: string, exclusiveStartKey: string | null | undefined): Promise<ScanItemsPage> => {
+        console.log('Inventory Api getItemsByCategoryAndName');
         const url: string = exclusiveStartKey ?
             `/items/all/category?category=${category}&name=${name}&exclusiveStartKey=${exclusiveStartKey}` :
             `/items/all/category?category=${category}&name=${name}`;
@@ -27,6 +31,7 @@ export const inventoryApi = {
         return response.data;
     },
     getItemsByName: async (name: string, exclusiveStartKey: string | null | undefined): Promise<ScanItemsPage> => {
+        console.log('Inventory Api getItemsByName: ');
         const url: string = exclusiveStartKey ?
             `/items/all/name?&name=${name}&exclusiveStartKey=${exclusiveStartKey}` :
             `/items/all/name?&name=${name}`;
