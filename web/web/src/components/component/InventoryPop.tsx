@@ -29,7 +29,6 @@ import {Categories} from "@/types/Categories.ts";
 
 export function InventoryPop({disable = true}: {disable: boolean}) {
     const defaultFormValues: InventoryItem = {
-        itemId: "placeholderId",
         name: "",
         description: "",
         category: "",

@@ -29,11 +29,11 @@ import axios from "axios";
 import {Spinner} from "@/components/ui/spinner.tsx";
 import {Categories} from "@/types/Categories.ts";
 
-export function UpdatePop({isOpen, onIsOpenChange, onRefreshTrigger, item}:
+export function UpdatePop({isOpen, onIsOpenChange, onUpdated, item}:
                           {
                               isOpen: boolean,
                               onIsOpenChange: (isOpen: boolean) => void,
-                              onRefreshTrigger: () => void,
+                              onUpdated: (item: InventoryItem) => void,
                               item: InventoryItem | null
                           }) {
     const {register, handleSubmit, reset, formState: {errors}, setValue} = useForm<InventoryItem>()
@@ -46,6 +46,7 @@ export function UpdatePop({isOpen, onIsOpenChange, onRefreshTrigger, item}:
         if (item) {
             reset(item)
             setCategoryValue(item?.category ?? "")
+            setCurrency(item?.currency ?? "USD")
         }
     }, [isOpen, item, reset])
     // TODO add currency and availability dropdown menu
@@ -55,6 +56,7 @@ export function UpdatePop({isOpen, onIsOpenChange, onRefreshTrigger, item}:
     const clearForm = () => {
         reset()
         setCategoryValue(item?.category ?? "")
+        setCurrency(item?.currency ?? "USD")
     }
 
     return <Dialog open={isOpen} onOpenChange={onIsOpenChange}>
@@ -254,7 +256,7 @@ export function UpdatePop({isOpen, onIsOpenChange, onRefreshTrigger, item}:
                                             inventoryApi.updateItem(payload).then((responseData) => {
                                                 try {
                                                     console.log(responseData)
-                                                    onRefreshTrigger()
+                                                    onUpdated(payload)
                                                 } catch (error) {
                                                     if (axios.isAxiosError(error) && error.response?.status === 404) {
                                                         console.log(`updateItem error ${error?.code}, ${error?.message}`)

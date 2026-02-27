@@ -1,22 +1,16 @@
 import {TableCell, TableRow} from "@/components/ui/table.tsx";
 import {ItemMedia} from "@/components/ui/item.tsx";
 import {SquarePen, Trash2} from "lucide-react";
-import {inventoryApi} from "@/api/inventoryApi.ts";
-import axios from "axios";
-import {UpdatePop} from "@/components/component/UpdatePop.tsx";
-import {useState} from "react";
+import {memo} from "react";
 import type {InventoryItem} from "@/types/InventoryItem.ts";
 
-
-export function ItemRow({item, setRefreshTrigger}: {
+export const ItemRow = memo(function ItemRow({item, onEdit, onDelete}: {
     item: InventoryItem,
-    setRefreshTrigger: () => void
+    onEdit: (item: InventoryItem) => void,
+    onDelete: (item: InventoryItem) => void,
 }) {
-    const [isEditing, setIsEditing] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
-
     return (
-        <TableRow key={item.itemId} onClick={() => {
+        <TableRow onClick={() => {
         }}>
             <TableCell className="text-left font-medium">{item.itemId}</TableCell>
             <TableCell className="text-left font-medium ">{item.name}</TableCell>
@@ -31,7 +25,7 @@ export function ItemRow({item, setRefreshTrigger}: {
                     <ItemMedia
                         className="size-6 hover:bg-gray-200 active:bg-gray-300"
                         onClick={() => {
-                            setIsEditing(true)
+                            onEdit(item)
                         }}
                     >
                         <SquarePen className="size-5"/>
@@ -39,30 +33,13 @@ export function ItemRow({item, setRefreshTrigger}: {
                     <ItemMedia
                         className="size-6 hover:bg-gray-200 active:bg-gray-300"
                         onClick={() => {
-                            setIsDeleting(true)
-                            inventoryApi.deleteItem(item.itemId).then((responseData) => {
-                                try {
-                                    console.log(responseData)
-                                    setRefreshTrigger()
-                                } catch (error) {
-                                    if (axios.isAxiosError(error) && error.response?.status === 404) {
-                                        console.log(`updateItem error ${error?.code}, ${error?.message}`)
-                                    }
-                                } finally {
-                                    setIsDeleting(false)
-                                }
-                            })
+                            onDelete(item)
                         }}
                     >
                         <Trash2 className="size-5 focus-visible:border-ring"/>
                     </ItemMedia>
                 </div>
             </TableCell>
-            <UpdatePop
-            isOpen={isEditing}
-            onIsOpenChange={setIsEditing}
-            onRefreshTrigger={() => setRefreshTrigger()}
-            item={item}></UpdatePop>
         </TableRow>
     )
-}
+})

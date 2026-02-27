@@ -1,5 +1,5 @@
 export interface InventoryItem {
-    itemId: string;
+    itemId?: string;
     name: string;
     description: string;
     price: number;

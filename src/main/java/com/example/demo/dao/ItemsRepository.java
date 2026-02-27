@@ -210,10 +210,7 @@ public class ItemsRepository {
 
     public ScanItemsPage scanItems(@Nullable String exclusiveStartKey) {
         try {
-            if (exclusiveStartKey != null &&
-                    (exclusiveStartKey.isEmpty() || "null".equalsIgnoreCase(exclusiveStartKey))) {
-                exclusiveStartKey = null;
-            }
+            exclusiveStartKey = this.normalizePaginationToken(exclusiveStartKey);
             ScanEnhancedRequest.Builder scanBuilder = ScanEnhancedRequest.builder()
                     .consistentRead(true)
                     .limit(10);
@@ -322,10 +319,7 @@ public class ItemsRepository {
 
     private QueryEnhancedRequest.Builder generateRequestBuilderWithExclusiveStartKey(@Nullable String exclusiveStartKey) {
         QueryEnhancedRequest.Builder queryBuilder = QueryEnhancedRequest.builder();
-        if (exclusiveStartKey != null &&
-                (exclusiveStartKey.isEmpty() || "null".equalsIgnoreCase(exclusiveStartKey))) {
-            exclusiveStartKey = null;
-        }
+        exclusiveStartKey = this.normalizePaginationToken(exclusiveStartKey);
         if (exclusiveStartKey != null) {
             System.out.println("build exclusiveStartKey");
             try {
@@ -366,8 +360,33 @@ public class ItemsRepository {
                 .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
     }
 
+    private @Nullable String normalizePaginationToken(@Nullable String token) {
+        if (token == null) {
+            return null;
+        }
+
+        String normalized = token.trim();
+        if (normalized.isEmpty() || "null".equalsIgnoreCase(normalized)) {
+            return null;
+        }
+
+        if (normalized.length() >= 2 && normalized.startsWith("\"") && normalized.endsWith("\"")) {
+            normalized = normalized.substring(1, normalized.length() - 1).trim();
+        }
+
+        if (normalized.contains("%")) {
+            normalized = URLDecoder.decode(normalized, StandardCharsets.UTF_8);
+        }
+
+        return normalized;
+    }
+
     private Map<String, AttributeValue> decodePaginationToken(String token) throws Exception {
-        String payload = new String(Base64.getUrlDecoder().decode(token), StandardCharsets.UTF_8);
+        String normalizedToken = this.normalizePaginationToken(token);
+        if (normalizedToken == null) {
+            return new LinkedHashMap<>();
+        }
+        String payload = new String(Base64.getUrlDecoder().decode(normalizedToken), StandardCharsets.UTF_8);
         Map<String, AttributeValue> result = new LinkedHashMap<>();
         if (payload.isBlank()) {
             return result;

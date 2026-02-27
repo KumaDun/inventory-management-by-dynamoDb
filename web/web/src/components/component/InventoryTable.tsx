@@ -8,26 +8,31 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table.tsx"
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {inventoryApi} from "@/api/inventoryApi.ts";
 import {Spinner} from "@/components/ui/spinner.tsx";
 import {ItemRow} from "@/components/component/ItemRow.tsx"
 import type {InventoryItem} from "@/types/InventoryItem.ts";
 import {Button} from "@/components/ui/button.tsx";
 import {SearchInput} from "@/components/component/SearchInput.tsx";
+import axios from "axios";
+import {UpdatePop} from "@/components/component/UpdatePop.tsx";
+import {DeletePop} from "@/components/component/DeletePop.tsx";
 
 export function InventoryTable(
     {isLoadingLinker} : {isLoadingLinker: (isLoading: boolean) => void}
 ) {
-    const [refreshTrigger, setRefreshTrigger] = useState<boolean>(false)
     const [isLoading, setIsLoading] = useState(false)
     const [items, setItems] = useState<InventoryItem[]>([])
     const [lastEvaluatedKey, setlastEvaluatedKey] = useState<string | null>(null)
     const [hasMore, setHasMore] = useState(true)
+    const [isUpdating, setIsUpdating] = useState<boolean>(false)
+    const [isDeleting, setIsDeleting] = useState<boolean>(false)
+    const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
 
     useEffect(() => {
         void loadItems(true)
-    }, [refreshTrigger])
+    }, [])
 
     const loadItems = async (replace: boolean) => {
         if (!replace && !hasMore) return
@@ -60,6 +65,16 @@ export function InventoryTable(
             }, 1000)
         }
     }
+
+    const handleEdit = useCallback((item: InventoryItem) => {
+        setSelectedItem(item)
+        setIsUpdating(true)
+    }, [])
+
+    const handleDelete = useCallback((item: InventoryItem) => {
+        setSelectedItem(item)
+        setIsDeleting(true)
+    }, [])
 
     return (
         <div>
@@ -100,8 +115,10 @@ export function InventoryTable(
                     }
                     {!isLoading && items.map((item: InventoryItem) => (
                         <ItemRow
+                            key={item.itemId}
                             item ={item}
-                            setRefreshTrigger={() => setRefreshTrigger(prevState => !prevState)}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
                         />
                     ))}
                     {!isLoading && items.length === 0 && (
@@ -127,6 +144,40 @@ export function InventoryTable(
                     </TableRow>
                 </TableFooter>
             </Table>
+            <UpdatePop
+                isOpen={isUpdating}
+                onIsOpenChange={setIsUpdating}
+                onUpdated={(updatedItem) => {
+                    setItems((prevItems) =>
+                        prevItems.map((prevItem) =>
+                            prevItem.itemId === updatedItem.itemId ? updatedItem : prevItem
+                        )
+                    )
+                }}
+                item={selectedItem}
+            ></UpdatePop>
+            <DeletePop
+                isOpenDelete={isDeleting}
+                onIsOpenChange={setIsDeleting}
+                onDeleted={
+                    () => {
+                        if (!selectedItem || !selectedItem?.itemId) {
+                            return
+                        }
+                        inventoryApi.deleteItem(selectedItem?.itemId).then((responseData) => {
+                            try {
+                                console.log(responseData)
+                                setItems((prevItems) => prevItems.filter(
+                                    (prevItem) => prevItem.itemId !== selectedItem.itemId)
+                                )
+                            } catch (error) {
+                                if (axios.isAxiosError(error) && error.response?.status === 404) {
+                                    console.log(`updateItem error ${error?.code}, ${error?.message}`)
+                                }
+                            }
+                   })}
+                }
+            ></DeletePop>
         </div>
     )
 }
