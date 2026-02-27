@@ -105,6 +105,14 @@ export function InventoryTable(
                     </TableRow>
                 </TableHeader>
                 <TableBody>
+                    {items.map((item: InventoryItem) => (
+                        <ItemRow
+                            key={item.itemId}
+                            item ={item}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                        />
+                    ))}
                     {isLoading &&
                         <TableRow className="h-16" key="SpinnerTablerow">
                             <TableCell colSpan={9} className="items-center">
@@ -113,14 +121,6 @@ export function InventoryTable(
 
                         </TableRow>
                     }
-                    {!isLoading && items.map((item: InventoryItem) => (
-                        <ItemRow
-                            key={item.itemId}
-                            item ={item}
-                            onEdit={handleEdit}
-                            onDelete={handleDelete}
-                        />
-                    ))}
                     {!isLoading && items.length === 0 && (
                         <TableRow>
                             <TableCell colSpan={9} className="text-center text-muted-foreground">
