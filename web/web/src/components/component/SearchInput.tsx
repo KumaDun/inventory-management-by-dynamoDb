@@ -24,10 +24,10 @@ export function SearchInput(
     const {
         categoryFilter,
         nameFilter,
-        stockFilter,
+        // stockFilter,
         setCategoryFilter,
         setNameFilter,
-        setStockFilter,
+        // setStockFilter,
         handleSearch,
         handleClearSearch,
         isLoading,

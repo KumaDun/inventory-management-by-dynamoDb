@@ -7,23 +7,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
-import java.util.Map;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("api/items")
-//@CrossOrigin(origins = {
-//        "https://inventory-management-system-8bit.vercel.app/"
-//},
-//        methods = {
-//                RequestMethod.GET,
-//                RequestMethod.POST,
-//                RequestMethod.PATCH,
-//                RequestMethod.DELETE
-//        })
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = {
+        "https://inventory-management-system-8bit.vercel.app/"
+},
+        methods = {
+                RequestMethod.GET,
+                RequestMethod.POST,
+                RequestMethod.PATCH,
+                RequestMethod.DELETE
+        })
+//@CrossOrigin(origins = "*")
 public class InventoryController {
     private final InventoryService inventoryService;
 
